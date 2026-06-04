@@ -278,10 +278,10 @@ a.logo span{color:#E63946}
 
 <script>
 const products=[
-  {id:1,brand:'NIKE',name:"Dunk Low 'Miami Dolphins'",price:199,img:'https://images.novelship.com/product/nike_dunk_low__miami_dolphins__0_75961.png?fit=fill&bg=FFFFFF&trim=color&q=75&w=600&h=600&pad=60&fm=webp&auto=compress',cat:'street',badge:'new',sku:'DV0833-102',colorway:'White / Cosmic Clay / Dusty Cactus',desc:'Rock the gridiron-inspired style with the Nike Dunk Low "Miami Dolphins". Striking aqua and white colorway with durable leather construction, padded collar and plush midsole.',sizes:[],sizeNote:'尺码即将更新，欢迎 WhatsApp 咨询'},
-  {id:2,brand:'NIKE',name:"Court Lite 4 'White Radiant Emerald'",price:180,img:'COURT_EMERALD.jpg',cat:'sport',badge:'new',sku:'FD6574-104',colorway:'White / Radiant Emerald / Black',desc:'Whether you\'re digging, dinking or trying to barrel a ball down the line, the NikeCourt Lite 4 helps you hold serve. Durable yet mobile with extra rubber toe area for durability.',sizes:[{uk:'UK 7',stock:1},{uk:'UK 7.5',stock:2},{uk:'UK 8',stock:5}]},
-  {id:3,brand:'NIKE',name:"Court Lite 4 'White Ghost World Indigo' (W)",price:180,img:'COURT_PURPLE_W.jpg',cat:'sport',badge:'new',sku:'FD6575-104',colorway:'White / Ghost / World Indigo',desc:'The NikeCourt Lite 4 for women delivers durable performance and all-day comfort on and off the court. Breathable mesh upper with Phylon midsole for cushioning.',sizes:[{uk:'UK 5',stock:2},{uk:'UK 5.5',stock:2},{uk:'UK 6',stock:4},{uk:'UK 6.5',stock:5}]},
-  {id:4,brand:'NIKE',name:"Court Lite 4 Heritage 'Desert Khaki'",price:160,img:'COURT_KHAKI.jpeg',cat:'sport',badge:'new',sku:'HV1474-200',colorway:'Desert Khaki / Neutral Olive / Medium Olive',desc:'This special NikeCourt Lite 4 Heritage is rooted in nostalgia. The vintage NikeCourt logo and iconic colourways complement modern-day tech like the breathable mesh upper. Extra rubber in the toe area adds durability where it\'s needed most.',sizes:[{uk:'UK 7',stock:7},{uk:'UK 8',stock:11},{uk:'UK 9',stock:8},{uk:'UK 10',stock:1}]},
+  {id:1,brand:'NIKE',name:"Dunk Low 'Miami Dolphins'",slug:'nike-dunk-low-miami-dolphins',price:199,img:'https://images.novelship.com/product/nike_dunk_low__miami_dolphins__0_75961.png?fit=fill&bg=FFFFFF&trim=color&q=75&w=600&h=600&pad=60&fm=webp&auto=compress',cat:'street',badge:'new',sku:'DV0833-102',colorway:'White / Cosmic Clay / Dusty Cactus',desc:'Rock the gridiron-inspired style with the Nike Dunk Low "Miami Dolphins". Striking aqua and white colorway with durable leather construction, padded collar and plush midsole.',sizes:[],sizeNote:'尺码即将更新，欢迎 WhatsApp 咨询'},
+  {id:2,brand:'NIKE',name:"Court Lite 4 'White Radiant Emerald'",slug:'nike-court-lite-4-white-radiant-emerald',price:180,img:'COURT_EMERALD.jpg',cat:'sport',badge:'new',sku:'FD6574-104',colorway:'White / Radiant Emerald / Black',desc:'Whether you\'re digging, dinking or trying to barrel a ball down the line, the NikeCourt Lite 4 helps you hold serve. Durable yet mobile with extra rubber toe area for durability.',sizes:[{uk:'UK 7',stock:1},{uk:'UK 7.5',stock:2},{uk:'UK 8',stock:5}]},
+  {id:3,brand:'NIKE',name:"Court Lite 4 'White Ghost World Indigo' (W)",slug:'nike-court-lite-4-white-ghost-world-indigo-w',price:180,img:'COURT_PURPLE_W.jpg',cat:'sport',badge:'new',sku:'FD6575-104',colorway:'White / Ghost / World Indigo',desc:'The NikeCourt Lite 4 for women delivers durable performance and all-day comfort on and off the court. Breathable mesh upper with Phylon midsole for cushioning.',sizes:[{uk:'UK 5',stock:2},{uk:'UK 5.5',stock:2},{uk:'UK 6',stock:4},{uk:'UK 6.5',stock:5}]},
+  {id:4,brand:'NIKE',name:"Court Lite 4 Heritage 'Desert Khaki'",slug:'nike-court-lite-4-heritage-desert-khaki',price:160,img:'COURT_KHAKI.jpeg',cat:'sport',badge:'new',sku:'HV1474-200',colorway:'Desert Khaki / Neutral Olive / Medium Olive',desc:'This special NikeCourt Lite 4 Heritage is rooted in nostalgia. The vintage NikeCourt logo and iconic colourways complement modern-day tech like the breathable mesh upper. Extra rubber in the toe area adds durability where it\'s needed most.',sizes:[{uk:'UK 7',stock:7},{uk:'UK 8',stock:11},{uk:'UK 9',stock:8},{uk:'UK 10',stock:1}]},
 ];
 
 let cart=[];
@@ -292,7 +292,7 @@ function renderProducts(){
   const grid=document.getElementById('productGrid');
   const list=activeFilter==='all'?products:products.filter(p=>p.cat===activeFilter);
   grid.innerHTML=list.map(p=>`
-    <a class="card" href="/#product-${p.id}" onclick="event.preventDefault();openProduct(${p.id})">
+    <a class="card" href="/#${p.slug}" onclick="event.preventDefault();openProduct(${p.id})">
       <div class="card-img">
         ${p.badge?`<span class="badge badge-${p.badge==='new'?'new':'hot'}">${p.badge==='new'?'NEW':'🔥 HOT'}</span>`:''}
         <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
@@ -373,7 +373,8 @@ function showPage(name, link){
   if(link) link.classList.add('active');
   window.scrollTo(0,0);
   document.getElementById('navLinks').classList.remove('open');
-  const url=name==='shop'?'/':name==='detail'?`/#product-${currentProductId}`:`/#${name}`;
+  const p=products.find(x=>x.id===currentProductId);
+  const url=name==='shop'?'/':name==='detail'?`/#${p?p.slug:'product'}`:`/#${name}`;
   history.pushState({page:name,productId:currentProductId},'',url);
 }
 
@@ -396,14 +397,15 @@ window.addEventListener('popstate',function(e){
 
 // Handle direct URL access
 window.addEventListener('DOMContentLoaded',function(){
-  const hash=window.location.hash;
-  if(hash.startsWith('#product-')){
-    const id=parseInt(hash.replace('#product-',''));
-    if(id) openProduct(id,true);
-  }else if(hash==='#about'){
+  const hash=window.location.hash.replace('#','');
+  if(!hash||hash==='shop') return;
+  if(hash==='about'){
     showPage('about',document.querySelectorAll('.nav-links a')[1]);
-  }else if(hash==='#contact'){
+  }else if(hash==='contact'){
     showPage('contact',document.querySelectorAll('.nav-links a')[2]);
+  }else{
+    const p=products.find(x=>x.slug===hash||x.id===parseInt(hash.replace('product-','')));
+    if(p) openProduct(p.id,true);
   }
 });
 

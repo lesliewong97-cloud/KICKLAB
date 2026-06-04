@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, email, phone, amount, items, redirect_url } = req.body;
+  const { name, email, phone, amount, items, address, redirect_url } = req.body;
 
   const BILLPLZ_API_KEY = process.env.BILLPLZ_API_KEY;
   const BILLPLZ_COLLECTION_ID = process.env.BILLPLZ_COLLECTION_ID;
@@ -17,9 +17,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  const description = items.map(i =>
+  const itemsDesc = items.map(i =>
     `${i.name} UK${i.size ? i.size.replace('UK ','') : 'N/A'} (${i.sku}) x${i.qty}`
   ).join(', ');
+
+  const description = address ? `${itemsDesc} | Alamat: ${address}` : itemsDesc;
 
   try {
     const credentials = Buffer.from(`${BILLPLZ_API_KEY}:`).toString('base64');

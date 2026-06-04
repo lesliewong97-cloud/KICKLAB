@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>KICKLAB — Street × Sport</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
@@ -15,11 +15,12 @@
   --font-head:'Barlow Condensed',sans-serif;
   --font-body:'DM Sans',sans-serif;
 }
-body{font-family:var(--font-body);background:#fff;color:#1A1A2E;min-height:100vh}
+body{font-family:var(--font-body);background:#fff;color:#1A1A2E;min-height:100vh;margin:0;padding:0}
 .frame{width:100%;background:#fff;min-height:100vh}
+html{scroll-behavior:auto}
 
 /* NAV */
-nav{background:#1A1A2E;padding:0 4rem;display:flex;align-items:center;justify-content:space-between;height:58px;flex-shrink:0;position:sticky;top:0;z-index:50}
+nav{background:#1A1A2E;padding:0 4rem;display:flex;align-items:center;justify-content:space-between;height:58px;flex-shrink:0;position:sticky;top:0;z-index:50;padding-top:env(safe-area-inset-top)}
 .logo{font-family:var(--font-head);font-size:24px;font-weight:700;color:#fff;letter-spacing:3px}
 .logo span{color:#E63946}
 .nav-links{display:flex;gap:0;list-style:none}
@@ -525,6 +526,8 @@ function showPage(name,link){
 }
 
 renderProducts();
+if('scrollRestoration' in history)history.scrollRestoration='manual';
+window.scrollTo(0,0);
 </script>
 </body>
 </html>

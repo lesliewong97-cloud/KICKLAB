@@ -1,10 +1,9 @@
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, email, phone, amount, description, redirect_url } = req.body;
+  const { name, email, phone, amount, items, redirect_url } = req.body;
 
   const BILLPLZ_API_KEY = process.env.BILLPLZ_API_KEY;
   const BILLPLZ_COLLECTION_ID = process.env.BILLPLZ_COLLECTION_ID;
@@ -13,8 +12,14 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
+  // Format description with SKU for inventory tracking
+  const description = items.map(i =>
+    `${i.name} UK${i.size ? i.size.replace('UK ','') : 'N/A'} (${i.sku}) x${i.qty}`
+  ).join(', ');
+
   try {
     const credentials = Buffer.from(`${BILLPLZ_API_KEY}:`).toString('base64');
+    const callbackUrl = `https://kicklab-nu.vercel.app/api/callback`;
 
     const response = await fetch('https://www.billplz.com/api/v3/bills', {
       method: 'POST',
@@ -27,10 +32,10 @@ export default async function handler(req, res) {
         email: email || 'noreply@kicklab.com',
         mobile: phone || '',
         name: name,
-        amount: String(Math.round(amount * 100)), // convert to cents
+        amount: String(Math.round(amount * 100)),
         description: description,
-        callback_url: `${process.env.VERCEL_URL ? 'https://'+process.env.VERCEL_URL : redirect_url}/api/callback`,
-        redirect_url: redirect_url,
+        callback_url: callbackUrl,
+        redirect_url: redirect_url || 'https://kicklab-nu.vercel.app',
       }),
     });
 

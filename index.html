@@ -253,6 +253,7 @@ nav{background:#1A1A2E;padding:0 4rem;display:flex;align-items:center;justify-co
 .size-btn{width:54px;height:40px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:13px;cursor:pointer;font-family:var(--font-body);transition:all .2s}
 .size-btn:hover{border-color:#1A1A2E}
 .size-btn.selected{background:#1A1A2E;color:#fff;border-color:#1A1A2E}
+.size-btn.disabled{opacity:.4;cursor:not-allowed;border-style:dashed}
 .detail-add-btn{width:100%;background:#E63946;color:#fff;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font-body);margin-bottom:10px;transition:background .2s}
 .detail-add-btn:hover{background:#c0303b}
 .detail-wa-btn{width:100%;background:#25D366;color:#fff;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;justify-content:center;gap:8px}
@@ -267,14 +268,50 @@ const products=[
     id:1,
     brand:'NIKE',
     name:"Dunk Low 'Miami Dolphins'",
-    price:599,
+    price:199,
     img:'https://images.novelship.com/product/nike_dunk_low__miami_dolphins__0_75961.png?fit=fill&bg=FFFFFF&trim=color&q=75&w=600&h=600&pad=60&fm=webp&auto=compress',
     cat:'street',
     badge:'new',
     sku:'DV0833-102',
     colorway:'White / Cosmic Clay / Dusty Cactus',
     desc:'Rock the gridiron-inspired style with the Nike Dunk Low "Miami Dolphins". These sneakers showcase a striking aqua and white colorway that embodies the spirit of the iconic NFL franchise. The durable leather construction ensures longevity, while the padded collar and plush midsole provide exceptional comfort.',
-    sizes:[6,6.5,7,7.5,8,8.5,9,9.5,10,10.5,11,11.5,12]
+    sizes:[],
+    sizeNote:'尺码即将更新，欢迎 WhatsApp 咨询'
+  },
+  {
+    id:2,
+    brand:'NIKE',
+    name:"Court Lite 4 'White Radiant Emerald'",
+    price:180,
+    img:'https://images.novelship.com/product/nike_court_lite_4__white_radiant_emerald__0_84521.png?fit=fill&bg=FFFFFF&trim=color&q=75&w=600&h=600&pad=60&fm=webp&auto=compress',
+    cat:'sport',
+    badge:'new',
+    sku:'FD6574-104',
+    colorway:'White / Radiant Emerald / Black',
+    desc:'Whether you\'re digging, dinking or trying to barrel a ball down the line, the NikeCourt Lite 4 helps you hold serve. Durable yet mobile, ideal for getting to seemingly untouchable shots. Extra rubber in the toe area adds durability where it\'s needed most.',
+    sizes:[
+      {uk:'UK 7', stock:1},
+      {uk:'UK 7.5', stock:2},
+      {uk:'UK 8', stock:5},
+    ],
+  },
+  {
+    id:3,
+    brand:'NIKE',
+    name:"Court Lite 4 'White Ghost World Indigo' (W)",
+    price:180,
+    img:'https://images.novelship.com/product/nike_court_lite_4__white_ghost_world_indigo__w__0_84522.png?fit=fill&bg=FFFFFF&trim=color&q=75&w=600&h=600&pad=60&fm=webp&auto=compress',
+    cat:'sport',
+    badge:'new',
+    sku:'FD6575-104',
+    colorway:'White / Ghost / World Indigo',
+    desc:'The NikeCourt Lite 4 for women delivers durable performance and all-day comfort on and off the court. Breathable mesh upper with synthetic overlays for lateral support, Phylon midsole for cushioning, and a herringbone outsole for superior grip on all surfaces.',
+    sizes:[
+      {uk:'UK 5', stock:2},
+      {uk:'UK 5.5', stock:2},
+      {uk:'UK 6', stock:4},
+      {uk:'UK 6.5', stock:5},
+    ],
   },
 ];
 
@@ -319,9 +356,16 @@ function openProduct(id){
         <div class="detail-sku">货号：${p.sku}</div>
         <div class="detail-colorway">${p.colorway}</div>
         <div class="detail-price">RM ${p.price} <span>/ 双</span></div>
-        <div class="size-label">选择尺码（US）</div>
+        <div class="size-label">选择尺码（UK）</div>
         <div class="sizes" id="sizeGrid">
-          ${p.sizes.map(s=>`<button class="size-btn" onclick="selectSize(this,'${s}')">${s}</button>`).join('')}
+          ${p.sizes && p.sizes.length > 0
+            ? p.sizes.map(s=>`
+                <button class="size-btn ${s.stock===0?'disabled':''}" 
+                  onclick="${s.stock>0?`selectSize(this,'${s.uk}')`:''}">
+                  ${s.uk}<br><span style="font-size:10px;color:${s.stock===1?'#E63946':s.stock<=2?'#f59e0b':'#888'}">${s.stock===0?'售罄':s.stock===1?'最后1双':s.stock+'双'}</span>
+                </button>`).join('')
+            : `<div style="font-size:13px;color:#888;padding:8px 0">${p.sizeNote||'尺码即将更新'}</div>`
+          }
         </div>
         <button class="detail-add-btn" onclick="addFromDetail(${p.id})">加入购物车</button>
         <button class="detail-wa-btn" onclick="window.open('https://wa.me/60102347825?text=Hi, 我想询问 ${encodeURIComponent(p.name)} (${p.sku})','_blank')">
@@ -353,14 +397,18 @@ function selectSize(btn,size){
 }
 
 function addFromDetail(id){
-  if(!selectedSize){alert('请先选择尺码！');return;}
   const p=products.find(x=>x.id===id);
-  const key=`${id}-${selectedSize}`;
+  if(p.sizes && p.sizes.length>0 && !selectedSize){alert('请先选择尺码！');return;}
+  if(selectedSize){
+    const sizeObj=p.sizes.find(s=>s.uk===selectedSize);
+    if(sizeObj && sizeObj.stock<=0){alert('此尺码已售罄！');return;}
+  }
+  const key=`${id}-${selectedSize||'tbd'}`;
   const existing=cart.find(x=>x.key===key);
   if(existing)existing.qty++;
   else cart.push({...p,key,size:selectedSize,qty:1});
   updateCartCount();
-  alert(`✓ 已加入购物车！\n${p.name} · US ${selectedSize}`);
+  alert(`✓ 已加入购物车！\n${p.name}${selectedSize?' · '+selectedSize:''}`);
 }
 
 function quickAdd(id,btn){

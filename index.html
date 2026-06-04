@@ -12,8 +12,8 @@ body{font-family:var(--font-body);background:#fff;color:#1A1A2E}
 
 /* NAV */
 nav{background:#1A1A2E;padding:0 4rem;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:50}
-.logo{font-family:var(--font-head);font-size:24px;font-weight:700;color:#fff;letter-spacing:3px}
-.logo span{color:#E63946}
+a.logo{font-family:var(--font-head);font-size:24px;font-weight:700;color:#fff;letter-spacing:3px;text-decoration:none;cursor:pointer}
+a.logo span{color:#E63946}
 .nav-links{display:flex;gap:0;list-style:none}
 .nav-links a{font-size:13px;color:rgba(255,255,255,0.65);text-decoration:none;cursor:pointer;padding:0 16px;height:58px;display:flex;align-items:center;border-bottom:2px solid transparent;transition:color .2s}
 .nav-links a:hover{color:#fff}
@@ -174,11 +174,11 @@ nav{background:#1A1A2E;padding:0 4rem;display:flex;align-items:center;justify-co
 <body>
 
 <nav>
-  <div class="logo" onclick="showPage('shop',document.querySelectorAll('.nav-links a')[0])" style="cursor:pointer">KICK<span>LAB</span></div>
+  <a class="logo" href="/" onclick="event.preventDefault();showPage('shop',document.querySelectorAll('.nav-links a')[0])">KICK<span>LAB</span></a>
   <ul class="nav-links" id="navLinks">
-    <li><a class="active" onclick="showPage('shop',this)">店铺</a></li>
-    <li><a onclick="showPage('about',this)">关于我们</a></li>
-    <li><a onclick="showPage('contact',this)">联系我们</a></li>
+    <li><a class="active" href="/" onclick="event.preventDefault();showPage('shop',this)">店铺</a></li>
+    <li><a href="/#about" onclick="event.preventDefault();showPage('about',this)">关于我们</a></li>
+    <li><a href="/#contact" onclick="event.preventDefault();showPage('contact',this)">联系我们</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:8px">
     <button class="cart-btn" onclick="openCart()">🛍 购物车 <span class="cart-count" id="cartCount">0</span></button>
@@ -292,7 +292,7 @@ function renderProducts(){
   const grid=document.getElementById('productGrid');
   const list=activeFilter==='all'?products:products.filter(p=>p.cat===activeFilter);
   grid.innerHTML=list.map(p=>`
-    <div class="card" onclick="openProduct(${p.id})">
+    <a class="card" href="/#product-${p.id}" onclick="event.preventDefault();openProduct(${p.id})">
       <div class="card-img">
         ${p.badge?`<span class="badge badge-${p.badge==='new'?'new':'hot'}">${p.badge==='new'?'NEW':'🔥 HOT'}</span>`:''}
         <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
@@ -305,13 +305,14 @@ function renderProducts(){
           <button class="add-btn" onclick="event.stopPropagation();quickAdd(${p.id},this)">+</button>
         </div>
       </div>
-    </div>
+    </a>
   `).join('');
 }
 
-function openProduct(id){
+function openProduct(id, skipSkeleton=false){
   const p=products.find(x=>x.id===id);
   selectedSize=null;
+  currentProductId=id;
 
   // Show skeleton first
   document.getElementById('detailContent').innerHTML=`
@@ -372,18 +373,38 @@ function showPage(name, link){
   if(link) link.classList.add('active');
   window.scrollTo(0,0);
   document.getElementById('navLinks').classList.remove('open');
-  history.pushState({page:name},'',window.location.pathname+'#'+name);
+  const url=name==='shop'?'/':name==='detail'?`/#product-${currentProductId}`:`/#${name}`;
+  history.pushState({page:name,productId:currentProductId},'',url);
 }
+
+let currentProductId=null;
 
 window.addEventListener('popstate',function(e){
   const page=e.state?e.state.page:'shop';
-  const idx={'shop':0,'about':1,'contact':2,'detail':null};
-  const linkIdx=idx[page];
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
-  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
-  if(linkIdx!==null) document.querySelectorAll('.nav-links a')[linkIdx].classList.add('active');
-  window.scrollTo(0,0);
+  const productId=e.state?e.state.productId:null;
+  if(page==='detail'&&productId){
+    openProduct(productId,true);
+  }else{
+    const idx={'shop':0,'about':1,'contact':2};
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+page).classList.add('active');
+    document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+    if(idx[page]!==undefined) document.querySelectorAll('.nav-links a')[idx[page]].classList.add('active');
+    window.scrollTo(0,0);
+  }
+});
+
+// Handle direct URL access
+window.addEventListener('DOMContentLoaded',function(){
+  const hash=window.location.hash;
+  if(hash.startsWith('#product-')){
+    const id=parseInt(hash.replace('#product-',''));
+    if(id) openProduct(id,true);
+  }else if(hash==='#about'){
+    showPage('about',document.querySelectorAll('.nav-links a')[1]);
+  }else if(hash==='#contact'){
+    showPage('contact',document.querySelectorAll('.nav-links a')[2]);
+  }
 });
 
 function selectSize(btn,size){

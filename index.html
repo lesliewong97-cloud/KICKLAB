@@ -15,11 +15,11 @@
   --font-head:'Barlow Condensed',sans-serif;
   --font-body:'DM Sans',sans-serif;
 }
-body{font-family:var(--font-body);background:#f2f2f2;color:#1A1A2E;min-height:100vh}
-.frame{max-width:900px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 40px rgba(0,0,0,0.1)}
+body{font-family:var(--font-body);background:#fff;color:#1A1A2E;min-height:100vh}
+.frame{max-width:100%;margin:0;background:#fff;min-height:100vh}
 
 /* NAV */
-nav{background:#1A1A2E;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:50}
+nav{background:#1A1A2E;padding:0 4rem;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:50}
 .logo{font-family:var(--font-head);font-size:24px;font-weight:700;color:#fff;letter-spacing:3px}
 .logo span{color:#E63946}
 .nav-links{display:flex;gap:0;list-style:none}
@@ -33,7 +33,7 @@ nav{background:#1A1A2E;padding:0 2rem;display:flex;align-items:center;justify-co
 .page{display:none}.page.active{display:block}
 
 /* HERO */
-.hero{background:#1A1A2E;padding:3rem 2rem 2.5rem;position:relative;overflow:hidden}
+.hero{background:#1A1A2E;padding:4rem 4rem 3rem;position:relative;overflow:hidden}
 .hero-inner{position:relative;z-index:1;max-width:400px}
 .hero-tag{font-size:11px;letter-spacing:3px;color:#E63946;font-weight:600;margin-bottom:.5rem}
 .hero h1{font-family:var(--font-head);font-size:58px;font-weight:700;color:#fff;line-height:.95;margin-bottom:1rem;letter-spacing:1px}
@@ -44,7 +44,7 @@ nav{background:#1A1A2E;padding:0 2rem;display:flex;align-items:center;justify-co
 .hero-deco{position:absolute;right:2rem;top:50%;transform:translateY(-50%);font-size:160px;opacity:.07;line-height:1;pointer-events:none}
 
 /* SECTION */
-.section{padding:2rem}
+.section{padding:2.5rem 4rem}
 .section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1.25rem}
 .section-title{font-family:var(--font-head);font-size:26px;font-weight:700;letter-spacing:.5px}
 
@@ -54,7 +54,7 @@ nav{background:#1A1A2E;padding:0 2rem;display:flex;align-items:center;justify-co
 .filter-btn.active{background:#1A1A2E;color:#fff;border-color:#1A1A2E}
 
 /* PRODUCT GRID */
-.products{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.products{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
 .card{background:#fff;border:1px solid #eee;border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s}
 .card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.1)}
 .card-img{background:#f7f7f7;height:130px;display:flex;align-items:center;justify-content:center;position:relative}
@@ -71,25 +71,25 @@ nav{background:#1A1A2E;padding:0 2rem;display:flex;align-items:center;justify-co
 .add-btn:hover{background:#E63946}
 
 /* ABOUT */
-.about-hero{background:#1A1A2E;padding:3rem 2rem}
+.about-hero{background:#1A1A2E;padding:4rem}
 .about-hero .section-title{color:#fff;font-size:46px;line-height:.95;margin-bottom:.75rem}
 .about-hero p{font-size:14px;color:rgba(255,255,255,0.55);line-height:1.7;max-width:440px}
 .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,0.08)}
-.stat{padding:1.25rem 2rem;border-right:1px solid rgba(255,255,255,0.08)}
+.stat{padding:1.25rem 3rem;border-right:1px solid rgba(255,255,255,0.08)}
 .stat:last-child{border-right:none}
 .stat-num{font-family:var(--font-head);font-size:32px;color:#E63946}
 .stat-label{font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px}
-.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:2rem}
+.about-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:2.5rem 4rem}
 .about-card{border:1px solid #eee;border-radius:10px;padding:18px}
 .about-card .icon{font-size:24px;margin-bottom:10px}
 .about-card h4{font-size:14px;font-weight:600;margin-bottom:5px;color:#1A1A2E}
 .about-card p{font-size:12px;color:#888;line-height:1.6}
 
 /* CONTACT */
-.contact-section{padding:2rem}
+.contact-section{padding:2.5rem 4rem}
 .contact-title{font-family:var(--font-head);font-size:36px;margin-bottom:.25rem}
 .contact-sub{font-size:13px;color:#888;margin-bottom:1.5rem}
-.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:2rem}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:2rem}
 .contact-card{border:1px solid #eee;border-radius:10px;padding:16px;display:flex;align-items:flex-start;gap:14px;cursor:pointer;transition:border-color .2s,box-shadow .2s}
 .contact-card:hover{border-color:#ccc;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
 .contact-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}

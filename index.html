@@ -124,9 +124,11 @@ a.logo span{color:#E63946}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.success{background:#1A1A2E}
 .toast.error{background:#E63946}
-.cart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-end;justify-content:center}
-.cart-overlay.open{display:flex}
-.cart-drawer{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:900px;padding:1.75rem;max-height:80vh;overflow-y:auto}
+.cart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0);z-index:100;justify-content:flex-end;transition:background .3s ease}
+.cart-overlay.open{display:flex;background:rgba(0,0,0,.45)}
+.cart-overlay.animate{background:rgba(0,0,0,.45)}
+.cart-drawer{background:#fff;width:100%;max-width:480px;height:100vh;padding:1.75rem;overflow-y:auto;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,0.15)}
+.cart-overlay.open .cart-drawer{transform:translateX(0)}
 .drawer-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
 .drawer-title{font-family:var(--font-head);font-size:24px;font-weight:700}
 .close-btn{background:#f0f0f0;border:none;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer;color:#666}
@@ -560,8 +562,19 @@ function updateCount(){
   document.getElementById('cartCount').textContent=cart.reduce((a,b)=>a+b.qty,0);
 }
 
-function openCart(){renderCart();document.getElementById('cartOverlay').classList.add('open')}
-function closeCart(){document.getElementById('cartOverlay').classList.remove('open')}
+function openCart(){
+  renderCart();
+  const overlay=document.getElementById('cartOverlay');
+  overlay.style.display='flex';
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>overlay.classList.add('open'));
+  });
+}
+function closeCart(){
+  const overlay=document.getElementById('cartOverlay');
+  overlay.classList.remove('open');
+  setTimeout(()=>overlay.style.display='none',350);
+}
 function closeCartOutside(e){if(e.target===document.getElementById('cartOverlay'))closeCart()}
 
 function renderCart(step=1){

@@ -564,7 +564,7 @@ function openCart(){renderCart();document.getElementById('cartOverlay').classLis
 function closeCart(){document.getElementById('cartOverlay').classList.remove('open')}
 function closeCartOutside(e){if(e.target===document.getElementById('cartOverlay'))closeCart()}
 
-function renderCart(){
+function renderCart(step=1){
   const el=document.getElementById('cartItems');
   const ft=document.getElementById('cartFooter');
   if(!cart.length){
@@ -572,62 +572,80 @@ function renderCart(){
     ft.innerHTML='';
     return;
   }
-  el.innerHTML=cart.map(i=>`
-    <div class="cart-item">
-      <div class="cart-item-img"><img src="${i.img}" alt="${i.name}"></div>
-      <div style="flex:1">
-        <div class="item-name">${i.brand} ${i.name}</div>
-        <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
-          ${i.size?`<span style="background:#f0f0f0;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600">${i.size.startsWith('UK')?i.size:'UK '+i.size}</span>`:''}
-          <span style="background:#f0f0f0;padding:2px 10px;border-radius:20px;font-size:11px">Qty: ${i.qty}</span>
+  const total=cart.reduce((a,b)=>a+b.price*b.qty,0);
+
+  if(step===1){
+    // STEP 1: Order summary
+    el.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="font-size:12px;font-weight:600;color:#1A1A2E">STEP 1 OF 2 — ORDER SUMMARY</div>
+        <div style="font-size:12px;color:#aaa">${cart.reduce((a,b)=>a+b.qty,0)} item(s)</div>
+      </div>
+      ${cart.map(i=>`
+        <div class="cart-item">
+          <div class="cart-item-img"><img src="${i.img}" alt="${i.name}"></div>
+          <div style="flex:1">
+            <div class="item-name">${i.brand} ${i.name}</div>
+            <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+              ${i.size?`<span style="background:#f0f0f0;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600">${i.size.startsWith('UK')?i.size:'UK '+i.size}</span>`:''}
+              <span style="background:#f0f0f0;padding:2px 10px;border-radius:20px;font-size:11px">Qty: ${i.qty}</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+            <div class="item-price">RM ${i.price*i.qty}</div>
+            <button class="item-remove" onclick="removeItem('${i.key}')">🗑</button>
+          </div>
+        </div>
+      `).join('')}
+    `;
+    ft.innerHTML=`
+      <div style="border-top:2px solid #f0f0f0;margin-top:.5rem;padding-top:1rem">
+        <div class="cart-total"><span class="total-label">Order Total</span><span class="total-val">RM ${total}</span></div>
+        <button class="checkout-btn" style="margin-top:1rem" onclick="renderCart(2)">Continue to Checkout →</button>
+      </div>
+    `;
+  } else {
+    // STEP 2: Shipping details
+    el.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <button onclick="renderCart(1)" style="background:none;border:none;font-size:13px;color:#888;cursor:pointer;padding:0;display:flex;align-items:center;gap:4px">← Back</button>
+        <div style="font-size:12px;font-weight:600;color:#1A1A2E">STEP 2 OF 2 — YOUR DETAILS</div>
+        <div style="font-size:12px;color:#E63946;font-weight:600">RM ${total}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <div style="font-size:11px;color:#aaa;font-weight:600;margin-bottom:6px;letter-spacing:.5px">CONTACT</div>
+          <input id="buyerName" class="f-input" placeholder="Name *" style="margin-bottom:8px">
+          <input id="buyerPhone" class="f-input" placeholder="WhatsApp No. *" style="margin-bottom:8px">
+          <input id="buyerEmail" class="f-input" placeholder="Email (optional)" style="margin-bottom:0">
+        </div>
+        <div>
+          <div style="font-size:11px;color:#aaa;font-weight:600;margin-bottom:6px;letter-spacing:.5px">SHIPPING ADDRESS</div>
+          <input id="buyerAddress1" class="f-input" placeholder="Address 1 *" style="margin-bottom:8px">
+          <input id="buyerAddress2" class="f-input" placeholder="Address 2 (optional)" style="margin-bottom:8px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <input id="buyerCity" class="f-input" placeholder="City *">
+            <input id="buyerPostcode" class="f-input" placeholder="Postcode *">
+          </div>
+          <select id="buyerState" class="f-input" style="margin-bottom:0">
+            <option value="">Select State *</option>
+            <option>Johor</option><option>Kedah</option><option>Kelantan</option>
+            <option>Kuala Lumpur</option><option>Labuan</option><option>Melaka</option>
+            <option>Negeri Sembilan</option><option>Pahang</option><option>Penang</option>
+            <option>Perak</option><option>Perlis</option><option>Putrajaya</option>
+            <option>Sabah</option><option>Sarawak</option><option>Selangor</option>
+            <option>Terengganu</option>
+          </select>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-        <div class="item-price">RM ${i.price*i.qty}</div>
-        <button class="item-remove" onclick="removeItem('${i.key}')">🗑</button>
+    `;
+    ft.innerHTML=`
+      <div style="border-top:2px solid #f0f0f0;padding-top:1rem">
+        <button class="checkout-btn" onclick="checkout(${total})">Proceed to Pay →</button>
+        <div style="text-align:center;font-size:11px;color:#aaa;margin-top:.75rem">🔒 Secure payment powered by Billplz</div>
       </div>
-    </div>
-  `).join('');
-  const total=cart.reduce((a,b)=>a+b.price*b.qty,0);
-  ft.innerHTML=`
-    <div style="border-top:2px solid #f0f0f0;margin-top:.5rem;padding-top:1rem">
-      <div class="cart-total"><span class="total-label">Order Total</span><span class="total-val">RM ${total}</span></div>
-      <div style="background:#f8f8f8;border-radius:10px;padding:1rem;margin:1rem 0">
-        <div style="font-size:12px;font-weight:600;margin-bottom:.75rem;color:#1A1A2E">Contact Details</div>
-        <input id="buyerName" class="f-input" placeholder="Name *" style="margin-bottom:8px">
-        <input id="buyerPhone" class="f-input" placeholder="WhatsApp No. * (e.g. 0123456789)" style="margin-bottom:8px">
-        <input id="buyerEmail" class="f-input" placeholder="Email (optional)" style="margin-bottom:0">
-      </div>
-      <div style="background:#f8f8f8;border-radius:10px;padding:1rem;margin:1rem 0">
-        <div style="font-size:12px;font-weight:600;margin-bottom:.75rem;color:#1A1A2E">Shipping Address</div>
-        <input id="buyerAddress1" class="f-input" placeholder="Address 1 *" style="margin-bottom:8px">
-        <input id="buyerAddress2" class="f-input" placeholder="Address 2 (optional)" style="margin-bottom:8px">
-        <input id="buyerCity" class="f-input" placeholder="City *" style="margin-bottom:8px">
-        <input id="buyerPostcode" class="f-input" placeholder="Postcode *" style="margin-bottom:8px">
-        <select id="buyerState" class="f-input" style="margin-bottom:0">
-          <option value="">Select State *</option>
-          <option>Johor</option>
-          <option>Kedah</option>
-          <option>Kelantan</option>
-          <option>Kuala Lumpur</option>
-          <option>Labuan</option>
-          <option>Melaka</option>
-          <option>Negeri Sembilan</option>
-          <option>Pahang</option>
-          <option>Penang</option>
-          <option>Perak</option>
-          <option>Perlis</option>
-          <option>Putrajaya</option>
-          <option>Sabah</option>
-          <option>Sarawak</option>
-          <option>Selangor</option>
-          <option>Terengganu</option>
-        </select>
-      </div>
-      <button class="checkout-btn" onclick="checkout(${total})">Proceed to Pay →</button>
-      <div style="text-align:center;font-size:11px;color:#aaa;margin-top:.75rem">🔒 Secure payment powered by Billplz</div>
-    </div>
-  `;
+    `;
+  }
 }
 
 async function checkout(total){

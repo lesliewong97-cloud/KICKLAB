@@ -337,7 +337,19 @@ function showPage(name, link){
   if(link) link.classList.add('active');
   window.scrollTo(0,0);
   document.getElementById('navLinks').classList.remove('open');
+  history.pushState({page:name},'',window.location.pathname+'#'+name);
 }
+
+window.addEventListener('popstate',function(e){
+  const page=e.state?e.state.page:'shop';
+  const idx={'shop':0,'about':1,'contact':2,'detail':null};
+  const linkIdx=idx[page];
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+  if(linkIdx!==null) document.querySelectorAll('.nav-links a')[linkIdx].classList.add('active');
+  window.scrollTo(0,0);
+});
 
 function selectSize(btn,size){
   document.querySelectorAll('.size-btn').forEach(b=>b.classList.remove('selected'));

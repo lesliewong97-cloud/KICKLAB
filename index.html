@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -176,12 +176,12 @@ a.logo span{color:#E63946}
 <nav>
   <a class="logo" href="/" onclick="event.preventDefault();showPage('shop',document.querySelectorAll('.nav-links a')[0])">KICK<span>LAB</span></a>
   <ul class="nav-links" id="navLinks">
-    <li><a class="active" href="/" onclick="event.preventDefault();showPage('shop',this)">店铺</a></li>
-    <li><a href="/#about" onclick="event.preventDefault();showPage('about',this)">关于我们</a></li>
-    <li><a href="/#contact" onclick="event.preventDefault();showPage('contact',this)">联系我们</a></li>
+    <li><a class="active" href="/" onclick="event.preventDefault();showPage('shop',this)">Shop</a></li>
+    <li><a href="/#about" onclick="event.preventDefault();showPage('about',this)">About</a></li>
+    <li><a href="/#contact" onclick="event.preventDefault();showPage('contact',this)">Contact</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:8px">
-    <button class="cart-btn" onclick="openCart()">🛍 购物车 <span class="cart-count" id="cartCount">0</span></button>
+    <button class="cart-btn" onclick="openCart()">🛍 Cart <span class="cart-count" id="cartCount">0</span></button>
     <button class="burger-btn" onclick="toggleNav()">☰</button>
   </div>
 </nav>
@@ -192,18 +192,18 @@ a.logo span{color:#E63946}
     <div class="hero-inner">
       <div class="hero-tag">NEW SEASON 2025 · MELAKA</div>
       <h1>RUN<br>FASTER.<br>LOOK<br>BETTER.</h1>
-      <p>专业级运动球鞋，为每一位追求速度与风格的你。</p>
+      <p>Professional-grade sneakers for those who demand performance and style.</p>
       <div class="hero-btns">
-        <button class="btn-primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">立即选购</button>
-        <button class="btn-outline" onclick="showPage('about',document.querySelectorAll('.nav-links a')[1])">了解更多</button>
+        <button class="btn-primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Shop Now</button>
+        <button class="btn-outline" onclick="showPage('about',document.querySelectorAll('.nav-links a')[1])">Learn More</button>
       </div>
     </div>
     <div class="hero-deco">👟</div>
   </div>
   <div class="section" id="products">
-    <div class="section-title">热门商品</div>
+    <div class="section-title">Featured Products</div>
     <div class="filters">
-      <button class="filter-btn active" onclick="filterProducts('all',this)">全部</button>
+      <button class="filter-btn active" onclick="filterProducts('all',this)">All</button>
       <button class="filter-btn" onclick="filterProducts('street',this)">Street</button>
       <button class="filter-btn" onclick="filterProducts('sport',this)">Sport</button>
     </div>
@@ -219,44 +219,45 @@ a.logo span{color:#E63946}
 <!-- ABOUT PAGE -->
 <div class="page" id="page-about">
   <div class="about-hero">
-    <div class="section-title">WE LIVE<br>FOR THE GAME.</div>
-    <p>KICKLAB 成立于 2018 年，专注为运动爱好者提供专业级球鞋。我们相信每一双鞋都是你表现的延伸。立足马六甲，服务全马。</p>
+    <div class="section-title">WE LIVE
+FOR THE GAME.</div>
+    <p>KICKLAB was founded in 2018 with a passion for sneaker culture. We believe every pair of shoes is an extension of your performance. Based in Melaka, serving all of Malaysia.</p>
     <div class="stats-bar" style="margin-top:2rem">
-      <div class="stat"><div class="stat-num">500+</div><div class="stat-label">款式收录</div></div>
-      <div class="stat"><div class="stat-num">7年</div><div class="stat-label">市场经验</div></div>
-      <div class="stat"><div class="stat-num">100%</div><div class="stat-label">正品保证</div></div>
-      <div class="stat"><div class="stat-num">10K+</div><div class="stat-label">满意顾客</div></div>
+      <div class="stat"><div class="stat-num">500+</div><div class="stat-label">Styles</div></div>
+      <div class="stat"><div class="stat-num">7 Yrs</div><div class="stat-label">Experience</div></div>
+      <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Authentic</div></div>
+      <div class="stat"><div class="stat-num">10K+</div><div class="stat-label">Happy Customers</div></div>
     </div>
   </div>
   <div class="about-grid">
-    <div class="about-card"><div class="icon">🏆</div><h4>100% 正品保证</h4><p>所有商品均来自官方授权渠道，附有验证证书。</p></div>
-    <div class="about-card"><div class="icon">🚚</div><h4>快速配送</h4><p>全马西亚 1–3 个工作日送达，实时追踪。</p></div>
-    <div class="about-card"><div class="icon">🔄</div><h4>7天无忧退换</h4><p>穿着不合适？7天内免费退换，无须理由。</p></div>
-    <div class="about-card"><div class="icon">🎧</div><h4>专业顾问服务</h4><p>有运动背景的客服随时为你推荐最适合的球鞋。</p></div>
+    <div class="about-card"><div class="icon">🏆</div><h4>100% Authentic</h4><p>All products sourced from authorised channels, with verification certificates.</p></div>
+    <div class="about-card"><div class="icon">🚚</div><h4>Fast Delivery</h4><p>1–3 working days nationwide with real-time tracking.</p></div>
+    <div class="about-card"><div class="icon">🔄</div><h4>7-Day Returns</h4><p>Wrong size? Free returns within 7 days, no questions asked.</p></div>
+    <div class="about-card"><div class="icon">🎧</div><h4>Expert Advice</h4><p>Our team is always ready to help you find the perfect pair.</p></div>
   </div>
 </div>
 
 <!-- CONTACT PAGE -->
 <div class="page" id="page-contact">
   <div class="contact-section">
-    <div class="contact-title">联系我们</div>
-    <div class="contact-sub">有任何问题都可以找到我们，我们会尽快回复你！</div>
+    <div class="contact-title">Contact</div>
+    <div class="contact-sub">Have any questions? We're here to help!</div>
     <div class="contact-grid">
       <div class="contact-card" onclick="window.open('https://wa.me/60102347825','_blank')">
         <div class="contact-icon icon-wa">💬</div>
-        <div><h4>WhatsApp 咨询</h4><p>+60 10-234 7825<br>每天 10:00 – 22:00</p></div>
+        <div><h4>WhatsApp</h4><p>+60 10-234 7825<br>Daily 10:00 – 22:00</p></div>
       </div>
       <div class="contact-card" onclick="window.open('mailto:lesliewong97@gmail.com','_blank')">
         <div class="contact-icon icon-mail">✉️</div>
-        <div><h4>电子邮件</h4><p>lesliewong97@gmail.com<br>24 小时内回复</p></div>
+        <div><h4>Email</h4><p>lesliewong97@gmail.com<br>Reply within 24 hours</p></div>
       </div>
     </div>
     <div class="form-wrap">
-      <div class="form-title">发送留言</div>
-      <input class="f-input" placeholder="你的名字">
-      <input class="f-input" placeholder="WhatsApp 号码 / 邮件">
-      <textarea class="f-input" rows="3" placeholder="你的问题或需求..." style="resize:none"></textarea>
-      <button class="send-btn" onclick="alert('消息已发送！我们会尽快联系你。')">发送留言 →</button>
+      <div class="form-title">Send a Message</div>
+      <input class="f-input" placeholder="Your Name">
+      <input class="f-input" placeholder="WhatsApp / Email">
+      <textarea class="f-input" rows="3" placeholder="Your question or enquiry..." style="resize:none"></textarea>
+      <button class="send-btn" onclick="showToast('Message sent! We will get back to you soon.')">Send Message →</button>
     </div>
   </div>
 </div>
@@ -268,7 +269,7 @@ a.logo span{color:#E63946}
 <div class="cart-overlay" id="cartOverlay" onclick="closeCartOutside(event)">
   <div class="cart-drawer">
     <div class="drawer-header">
-      <div class="drawer-title">购物车</div>
+      <div class="drawer-title">Cart</div>
       <button class="close-btn" onclick="closeCart()">✕</button>
     </div>
     <div id="cartItems"></div>
@@ -278,7 +279,7 @@ a.logo span{color:#E63946}
 
 <script>
 const products=[
-  {id:1,brand:'NIKE',name:"Dunk Low 'Miami Dolphins'",slug:'nike-dunk-low-miami-dolphins',price:199,img:'https://images.novelship.com/product/nike_dunk_low__miami_dolphins__0_75961.png?fit=fill&bg=FFFFFF&trim=color&q=75&w=600&h=600&pad=60&fm=webp&auto=compress',cat:'street',badge:'new',sku:'DV0833-102',colorway:'White / Cosmic Clay / Dusty Cactus',desc:'Rock the gridiron-inspired style with the Nike Dunk Low "Miami Dolphins". Striking aqua and white colorway with durable leather construction, padded collar and plush midsole.',sizes:[],sizeNote:'尺码即将更新，欢迎 WhatsApp 咨询'},
+  {id:1,brand:'NIKE',name:"Dunk Low 'Miami Dolphins'",slug:'nike-dunk-low-miami-dolphins',price:199,img:'https://images.novelship.com/product/nike_dunk_low__miami_dolphins__0_75961.png?fit=fill&bg=FFFFFF&trim=color&q=75&w=600&h=600&pad=60&fm=webp&auto=compress',cat:'street',badge:'new',sku:'DV0833-102',colorway:'White / Cosmic Clay / Dusty Cactus',desc:'Rock the gridiron-inspired style with the Nike Dunk Low "Miami Dolphins". Striking aqua and white colorway with durable leather construction, padded collar and plush midsole.',sizes:[],sizeNote:'Sizes coming soon. WhatsApp us to enquire.'},
   {id:2,brand:'NIKE',name:"Court Lite 4 'White Radiant Emerald'",slug:'nike-court-lite-4-white-radiant-emerald',price:180,img:'COURT_EMERALD.jpg',cat:'sport',badge:'new',sku:'FD6574-104',colorway:'White / Radiant Emerald / Black',desc:'Whether you\'re digging, dinking or trying to barrel a ball down the line, the NikeCourt Lite 4 helps you hold serve. Durable yet mobile with extra rubber toe area for durability.',sizes:[{uk:'UK 7',stock:1},{uk:'UK 7.5',stock:2},{uk:'UK 8',stock:5}]},
   {id:3,brand:'NIKE',name:"Court Lite 4 'White Ghost World Indigo' (W)",slug:'nike-court-lite-4-white-ghost-world-indigo-w',price:180,img:'COURT_PURPLE_W.jpg',cat:'sport',badge:'new',sku:'FD6575-104',colorway:'White / Ghost / World Indigo',desc:'The NikeCourt Lite 4 for women delivers durable performance and all-day comfort on and off the court. Breathable mesh upper with Phylon midsole for cushioning.',sizes:[{uk:'UK 5',stock:2},{uk:'UK 5.5',stock:2},{uk:'UK 6',stock:4},{uk:'UK 6.5',stock:5}]},
   {id:4,brand:'NIKE',name:"Court Lite 4 Heritage 'Desert Khaki'",slug:'nike-court-lite-4-heritage-desert-khaki',price:160,img:'COURT_KHAKI.jpeg',cat:'sport',badge:'new',sku:'HV1474-200',colorway:'Desert Khaki / Neutral Olive / Medium Olive',desc:'This special NikeCourt Lite 4 Heritage is rooted in nostalgia. The vintage NikeCourt logo and iconic colourways complement modern-day tech like the breathable mesh upper. Extra rubber in the toe area adds durability where it\'s needed most.',sizes:[{uk:'UK 7',stock:7},{uk:'UK 8',stock:11},{uk:'UK 9',stock:8},{uk:'UK 10',stock:1}]},
@@ -342,24 +343,24 @@ function openProduct(id, skipSkeleton=false){
   // Load real content after short delay
   setTimeout(()=>{
     document.getElementById('detailContent').innerHTML=`
-    <button class="back-btn" onclick="showPage('shop',document.querySelectorAll('.nav-links a')[0])">← 返回店铺</button>
+    <button class="back-btn" onclick="showPage('shop',document.querySelectorAll('.nav-links a')[0])">← Back to Shop</button>回Shop</button>
     <div class="detail-grid">
       <div class="detail-img-wrap"><img src="${p.img}" alt="${p.name}"></div>
       <div class="detail-info">
         <div class="detail-brand">${p.brand}</div>
         <div class="detail-name">${p.name}</div>
-        <div class="detail-sku">货号：${p.sku}</div>
+        <div class="detail-sku">SKU: ${p.sku}</div>
         <div class="detail-colorway">${p.colorway}</div>
-        <div class="detail-price">RM ${p.price} <span>/ 双</span></div>
-        <div class="size-label">选择尺码（UK）</div>
+        <div class="detail-price">RM ${p.price} <span>/ pairs</span></div>
+        <div class="size-label">Select Size (UK)</div>
         <div class="sizes">
           ${p.sizes&&p.sizes.length>0
-            ?p.sizes.map(s=>`<button class="size-btn${s.stock===0?' disabled':''}" onclick="${s.stock>0?`selectSize(this,'${s.uk}')`:''}">${s.uk}<br><span style="font-size:10px;color:${s.stock===1?'#E63946':s.stock<=2?'#f59e0b':'#aaa'}">${s.stock===0?'售罄':s.stock===1?'最后1双':s.stock+'双'}</span></button>`).join('')
-            :`<div style="font-size:13px;color:#888">${p.sizeNote||'尺码即将更新'}</div>`}
+            ?p.sizes.map(s=>`<button class="size-btn${s.stock===0?' disabled':''}" onclick="${s.stock>0?`selectSize(this,'${s.uk}')`:''}">${s.uk}<br><span style="font-size:10px;color:${s.stock===1?'#E63946':s.stock<=2?'#f59e0b':'#aaa'}">${s.stock===0?'Sold Out':s.stock===1?'Last 1 pair':s.stock+'pairs'}</span></button>`).join('')
+            :`<div style="font-size:13px;color:#888">${p.sizeNote||'Sizes coming soon'}</div>`}
         </div>
-        <button class="detail-add-btn" onclick="addFromDetail(${p.id})">加入购物车</button>
-        <button class="detail-wa-btn" onclick="window.open('https://wa.me/60102347825?text=Hi, 我想询问 ${encodeURIComponent(p.name)} (${p.sku})','_blank')">💬 WhatsApp 咨询</button>
-        <div class="detail-desc"><h4>商品描述</h4><p>${p.desc}</p></div>
+        <button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>
+        <button class="detail-wa-btn" onclick="window.open('https://wa.me/60102347825?text=Hi, I would like to enquire about ${encodeURIComponent(p.name)} (${p.sku})','_blank')">💬 WhatsApp 咨询</button>
+        <div class="detail-desc"><h4>Product Description</h4><p>${p.desc}</p></div>
       </div>
     </div>
   `;
@@ -424,13 +425,13 @@ function showToast(msg, type='success'){
 
 function addFromDetail(id){
   const p=products.find(x=>x.id===id);
-  if(p.sizes&&p.sizes.length>0&&!selectedSize){showToast('请先选择尺码！','error');return;}
+  if(p.sizes&&p.sizes.length>0&&!selectedSize){showToast('Please select a size first!','error');return;}
   const key=`${id}-${selectedSize||'tbd'}`;
   const ex=cart.find(x=>x.key===key);
   if(ex)ex.qty++;
   else cart.push({...p,key,size:selectedSize,qty:1});
   updateCount();
-  showToast(`✓ 已加入购物车！${selectedSize?' · '+selectedSize:''}`);
+  showToast(`✓ 已Add to Cart！${selectedSize?' · '+selectedSize:''}`);
 }
 
 function quickAdd(id,btn){
@@ -463,7 +464,7 @@ function renderCart(){
   const el=document.getElementById('cartItems');
   const ft=document.getElementById('cartFooter');
   if(!cart.length){
-    el.innerHTML='<div class="empty-cart">🛍 购物车是空的</div>';
+    el.innerHTML='<div class="empty-cart">🛍 Your cart is empty</div>';
     ft.innerHTML='';
     return;
   }
@@ -474,7 +475,7 @@ function renderCart(){
         <div class="item-name">${i.brand} ${i.name}</div>
         <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
           ${i.size?`<span style="background:#f0f0f0;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600">${i.size.startsWith('UK')?i.size:'UK '+i.size}</span>`:''}
-          <span style="background:#f0f0f0;padding:2px 10px;border-radius:20px;font-size:11px">数量：${i.qty}</span>
+          <span style="background:#f0f0f0;padding:2px 10px;border-radius:20px;font-size:11px">Qty: ${i.qty}</span>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
@@ -486,20 +487,21 @@ function renderCart(){
   const total=cart.reduce((a,b)=>a+b.price*b.qty,0);
   ft.innerHTML=`
     <div style="border-top:2px solid #f0f0f0;margin-top:.5rem;padding-top:1rem">
-      <div class="cart-total"><span class="total-label">订单总计</span><span class="total-val">RM ${total}</span></div>
+      <div class="cart-total"><span class="total-label">Order Total</span><span class="total-val">RM ${total}</span></div>
       <div style="background:#f8f8f8;border-radius:10px;padding:1rem;margin:1rem 0">
-        <div style="font-size:12px;font-weight:600;margin-bottom:.75rem;color:#1A1A2E">联系资料</div>
-        <input id="buyerName" class="f-input" placeholder="姓名 *" style="margin-bottom:8px">
-        <input id="buyerPhone" class="f-input" placeholder="WhatsApp 号码 * （例：0123456789）" style="margin-bottom:8px">
-        <input id="buyerEmail" class="f-input" placeholder="电子邮件（选填）" style="margin-bottom:0">
+        <div style="font-size:12px;font-weight:600;margin-bottom:.75rem;color:#1A1A2E">Contact Details</div>
+        <input id="buyerName" class="f-input" placeholder="Name *" style="margin-bottom:8px">
+        <input id="buyerPhone" class="f-input" placeholder="WhatsApp No. * (e.g. 0123456789)" style="margin-bottom:8px">
+        <input id="buyerEmail" class="f-input" placeholder="Email (optional)" style="margin-bottom:0">
       </div>
       <div style="background:#f8f8f8;border-radius:10px;padding:1rem;margin:1rem 0">
-        <div style="font-size:12px;font-weight:600;margin-bottom:.75rem;color:#1A1A2E">收货地址</div>
-        <input id="buyerAddress" class="f-input" placeholder="地址 * （例：No 12, Jalan ABC）" style="margin-bottom:8px">
-        <input id="buyerCity" class="f-input" placeholder="城市 * （例：Melaka）" style="margin-bottom:8px">
-        <input id="buyerPostcode" class="f-input" placeholder="邮政编码 * （例：75000）" style="margin-bottom:8px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:.75rem;color:#1A1A2E">Shipping Address</div>
+        <input id="buyerAddress1" class="f-input" placeholder="Address 1 *" style="margin-bottom:8px">
+        <input id="buyerAddress2" class="f-input" placeholder="Address 2 (optional)" style="margin-bottom:8px">
+        <input id="buyerCity" class="f-input" placeholder="City *" style="margin-bottom:8px">
+        <input id="buyerPostcode" class="f-input" placeholder="Postcode *" style="margin-bottom:8px">
         <select id="buyerState" class="f-input" style="margin-bottom:0">
-          <option value="">选择州属 *</option>
+          <option value="">Select State *</option>
           <option>Johor</option>
           <option>Kedah</option>
           <option>Kelantan</option>
@@ -518,8 +520,8 @@ function renderCart(){
           <option>Terengganu</option>
         </select>
       </div>
-      <button class="checkout-btn" onclick="checkout(${total})">前往付款 →</button>
-      <div style="text-align:center;font-size:11px;color:#aaa;margin-top:.75rem">🔒 安全付款，由 Billplz 提供支持</div>
+      <button class="checkout-btn" onclick="checkout(${total})">Proceed to Pay →</button>
+      <div style="text-align:center;font-size:11px;color:#aaa;margin-top:.75rem">🔒 Secure payment powered by Billplz</div>
     </div>
   `;
 }
@@ -528,13 +530,14 @@ async function checkout(total){
   const name=document.getElementById('buyerName').value.trim();
   const phone=document.getElementById('buyerPhone').value.trim();
   const email=document.getElementById('buyerEmail').value.trim();
-  const address=document.getElementById('buyerAddress').value.trim();
+  const address1=document.getElementById('buyerAddress1').value.trim();
+  const address2=document.getElementById('buyerAddress2').value.trim();
   const city=document.getElementById('buyerCity').value.trim();
   const postcode=document.getElementById('buyerPostcode').value.trim();
   const state=document.getElementById('buyerState').value.trim();
 
-  if(!name||!phone){showToast('请填写姓名和 WhatsApp 号码！','error');return;}
-  if(!address||!city||!postcode||!state){showToast('请填写完整收货地址！','error');return;}
+  if(!name||!phone){showToast('Please fill in your name and WhatsApp number!','error');return;}
+  if(!address1||!city||!postcode||!state){showToast('Please fill in your complete shipping address!','error');return;}
 
   const items=cart.map(i=>({
     name:i.name,
@@ -545,7 +548,7 @@ async function checkout(total){
   }));
 
   const btn=document.querySelector('.checkout-btn');
-  btn.textContent='处理中...';
+  btn.textContent='Processing...';
   btn.disabled=true;
 
   try{
@@ -558,7 +561,7 @@ async function checkout(total){
         email:email||'noreply@kicklab.com',
         amount:total,
         items,
-        address:`${address}, ${postcode} ${city}, ${state}`,
+        address:`${address1}${address2?', '+address2:''}, ${postcode} ${city}, ${state}`,
         redirect_url:window.location.origin,
       }),
     });
@@ -566,13 +569,13 @@ async function checkout(total){
     if(data.payment_url){
       window.location.href=data.payment_url;
     }else{
-      showToast('付款出现问题，请 WhatsApp 我们！','error');
-      btn.textContent='前往付款 →';
+      showToast('Payment error. Please WhatsApp us for help!','error');
+      btn.textContent='Proceed to Pay →';
       btn.disabled=false;
     }
   }catch(err){
-      showToast('网络错误，请稍后再试！','error');
-    btn.textContent='前往付款 →';
+      showToast('Network error. Please try again!','error');
+    btn.textContent='Proceed to Pay →';
     btn.disabled=false;
   }
 }

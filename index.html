@@ -143,7 +143,34 @@ a.logo span{color:#E63946}
 .checkout-btn{width:100%;background:#E63946;color:#fff;border:none;padding:13px;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font-body);margin-top:.5rem}
 .empty-cart{text-align:center;padding:2.5rem;color:#aaa;font-size:14px}
 
-/* MOBILE */
+/* SUCCESS PAGE */
+.success-wrap{padding:3rem 4rem;max-width:680px;margin:0 auto}
+.success-icon{width:72px;height:72px;background:#e8faf0;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:32px}
+.success-title{font-family:var(--font-head);font-size:42px;font-weight:700;text-align:center;margin-bottom:.5rem}
+.success-sub{font-size:14px;color:#888;text-align:center;margin-bottom:2rem}
+.order-card{background:#fff;border:1px solid #eee;border-radius:16px;overflow:hidden;margin-bottom:1.5rem}
+.order-header{background:#1A1A2E;padding:1.25rem 1.5rem;display:flex;justify-content:space-between;align-items:center}
+.order-header span{font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:.5px}
+.order-num{font-family:var(--font-head);font-size:22px;color:#fff;letter-spacing:1px}
+.order-body{padding:1.5rem}
+.order-section{margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid #f0f0f0}
+.order-section:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.order-label{font-size:11px;letter-spacing:1.5px;color:#aaa;font-weight:600;margin-bottom:.75rem}
+.order-item{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.order-item:last-child{margin-bottom:0}
+.order-item-img{width:56px;height:56px;background:#f7f7f7;border-radius:8px;overflow:hidden;flex-shrink:0}
+.order-item-img img{width:100%;height:100%;object-fit:contain;padding:4px}
+.order-item-name{flex:1;font-size:13px;font-weight:500}
+.order-item-size{font-size:11px;color:#999;margin-top:2px}
+.order-item-price{font-family:var(--font-head);font-size:16px;color:#E63946}
+.order-address{font-size:13px;color:#555;line-height:1.7}
+.order-total{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;background:#f8f8f8;border-top:1px solid #eee}
+.order-total-label{font-size:13px;color:#888}
+.order-total-val{font-family:var(--font-head);font-size:28px;font-weight:700;color:#E63946}
+.success-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn-wa{background:#25D366;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;gap:8px}
+.btn-shop{background:#1A1A2E;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body)}
+@media(max-width:768px){.success-wrap{padding:1.5rem}}
 @media(max-width:768px){
   nav{padding:0 1rem;position:relative}
   .nav-links{display:none;position:absolute;top:58px;left:0;right:0;background:#1A1A2E;flex-direction:column;z-index:99}
@@ -216,6 +243,11 @@ a.logo span{color:#E63946}
   <div class="detail-wrap" id="detailContent"></div>
 </div>
 
+<!-- ORDER SUCCESS PAGE -->
+<div class="page" id="page-success">
+  <div class="success-wrap" id="successContent"></div>
+</div>
+
 <!-- ABOUT PAGE -->
 <div class="page" id="page-about">
   <div class="about-hero">
@@ -283,7 +315,7 @@ const products=[
   {id:2,brand:'NIKE',name:"Court Lite 4 'White Radiant Emerald'",slug:'nike-court-lite-4-white-radiant-emerald',price:180,img:'COURT_EMERALD.jpg',cat:'sport',badge:'new',sku:'FD6574-104',colorway:'White / Radiant Emerald / Black',desc:'Whether you\'re digging, dinking or trying to barrel a ball down the line, the NikeCourt Lite 4 helps you hold serve. Durable yet mobile with extra rubber toe area for durability.',sizes:[{uk:'UK 7',stock:1},{uk:'UK 7.5',stock:2},{uk:'UK 8',stock:5}]},
   {id:3,brand:'NIKE',name:"Court Lite 4 'White Ghost World Indigo' (W)",slug:'nike-court-lite-4-white-ghost-world-indigo-w',price:180,img:'COURT_PURPLE_W.jpg',cat:'sport',badge:'new',sku:'FD6575-104',colorway:'White / Ghost / World Indigo',desc:'The NikeCourt Lite 4 for women delivers durable performance and all-day comfort on and off the court. Breathable mesh upper with Phylon midsole for cushioning.',sizes:[{uk:'UK 5',stock:2},{uk:'UK 5.5',stock:2},{uk:'UK 6',stock:4},{uk:'UK 6.5',stock:5}]},
   {id:4,brand:'NIKE',name:"Court Lite 4 Heritage 'Desert Khaki'",slug:'nike-court-lite-4-heritage-desert-khaki',price:160,img:'COURT_KHAKI.jpeg',cat:'sport',badge:'new',sku:'HV1474-200',colorway:'Desert Khaki / Neutral Olive / Medium Olive',desc:'This special NikeCourt Lite 4 Heritage is rooted in nostalgia. The vintage NikeCourt logo and iconic colourways complement modern-day tech like the breathable mesh upper. Extra rubber in the toe area adds durability where it\'s needed most.',sizes:[{uk:'UK 7',stock:7},{uk:'UK 8',stock:11},{uk:'UK 9',stock:8},{uk:'UK 10',stock:1}]},
-  {id:5,brand:'KICKLAB',name:"Test Product (DO NOT BUY)",slug:'kicklab-test-product',price:5,img:'https://images.novelship.com/product/nike_dunk_low__miami_dolphins__0_75961.png?fit=fill&bg=FFFFFF&trim=color&q=75&w=600&h=600&pad=60&fm=webp&auto=compress',cat:'street',badge:'',sku:'TEST-001',colorway:'Test / Test / Test',desc:'This is a test product for payment testing only. Please do not purchase.',sizes:[{uk:'UK 8',stock:99}]},
+];
 ];
 
 let cart=[];
@@ -399,6 +431,12 @@ window.addEventListener('popstate',function(e){
 
 // Handle direct URL access
 window.addEventListener('DOMContentLoaded',function(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('payment')==='success'){
+    history.replaceState({},'','/');
+    showSuccess();
+    return;
+  }
   const hash=window.location.hash.replace('#','');
   if(!hash||hash==='shop') return;
   if(hash==='about'){
@@ -417,7 +455,71 @@ function selectSize(btn,size){
   selectedSize=size;
 }
 
-function showToast(msg, type='success'){
+function showSuccess(){
+  const order=JSON.parse(sessionStorage.getItem('lastOrder')||'null');
+  if(!order){showPage('shop',document.querySelectorAll('.nav-links a')[0]);return;}
+
+  const el=document.getElementById('successContent');
+  el.innerHTML=`
+    <div class="success-icon">✅</div>
+    <div class="success-title">Order Confirmed!</div>
+    <div class="success-sub">Thank you ${order.name}! Your order has been received.<br>We'll WhatsApp you shortly to confirm delivery details.</div>
+
+    <div class="order-card">
+      <div class="order-header">
+        <div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:1px;margin-bottom:4px">ORDER NUMBER</div>
+          <div class="order-num">#${order.orderNum}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:1px;margin-bottom:4px">DATE</div>
+          <div style="font-size:13px;color:#fff">${order.date}</div>
+        </div>
+      </div>
+      <div class="order-body">
+        <div class="order-section">
+          <div class="order-label">ITEMS ORDERED</div>
+          ${order.items.map(i=>`
+            <div class="order-item">
+              <div class="order-item-img"><img src="${i.img}" alt="${i.name}"></div>
+              <div style="flex:1">
+                <div class="order-item-name">${i.brand} ${i.name}</div>
+                <div class="order-item-size">${i.size?i.size:''} · Qty: ${i.qty}</div>
+              </div>
+              <div class="order-item-price">RM ${i.price*i.qty}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="order-section">
+          <div class="order-label">SHIPPING TO</div>
+          <div class="order-address">
+            <strong>${order.name}</strong><br>
+            ${order.address}<br>
+            📱 ${order.phone}
+          </div>
+        </div>
+      </div>
+      <div class="order-total">
+        <span class="order-total-label">Total Paid</span>
+        <span class="order-total-val">RM ${order.total}</span>
+      </div>
+    </div>
+
+    <div class="success-btns">
+      <button class="btn-wa" onclick="window.open('https://wa.me/60102347825?text=Hi, my order number is %23${order.orderNum}','_blank')">
+        💬 WhatsApp Us
+      </button>
+      <button class="btn-shop" onclick="showPage('shop',document.querySelectorAll('.nav-links a')[0])">
+        Continue Shopping
+      </button>
+    </div>
+  `;
+
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-success').classList.add('active');
+  window.scrollTo(0,0);
+  sessionStorage.removeItem('lastOrder');
+}
   const t=document.getElementById('toast');
   t.textContent=msg;
   t.className=`toast ${type} show`;
@@ -568,6 +670,17 @@ async function checkout(total){
     });
     const data=await res.json();
     if(data.payment_url){
+      // Save order data for success page
+      const orderNum='KL'+Date.now().toString().slice(-6);
+      const now=new Date();
+      const date=now.toLocaleDateString('en-MY',{day:'numeric',month:'short',year:'numeric'});
+      sessionStorage.setItem('lastOrder',JSON.stringify({
+        orderNum,date,
+        name,phone,
+        address:`${address1}${address2?', '+address2:''}, ${postcode} ${city}, ${state}`,
+        items:cart.map(i=>({brand:i.brand,name:i.name,img:i.img,size:i.size,qty:i.qty,price:i.price})),
+        total,
+      }));
       window.location.href=data.payment_url;
     }else{
       showToast('Payment error. Please WhatsApp us for help!','error');

@@ -119,7 +119,11 @@ nav{background:#1A1A2E;padding:0 4rem;display:flex;align-items:center;justify-co
 .f-input::placeholder{color:#bbb}
 .send-btn{background:#E63946;color:#fff;border:none;padding:11px 24px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-body)}
 
-/* CART */
+/* TOAST */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);background:#1A1A2E;color:#fff;padding:12px 24px;border-radius:30px;font-size:14px;font-weight:500;z-index:999;transition:transform .3s ease;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.success{background:#1A1A2E}
+.toast.error{background:#E63946}
 .cart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-end;justify-content:center}
 .cart-overlay.open{display:flex}
 .cart-drawer{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:900px;padding:1.75rem;max-height:80vh;overflow-y:auto}
@@ -257,6 +261,9 @@ nav{background:#1A1A2E;padding:0 4rem;display:flex;align-items:center;justify-co
   </div>
 </div>
 
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
 <!-- CART -->
 <div class="cart-overlay" id="cartOverlay" onclick="closeCartOutside(event)">
   <div class="cart-drawer">
@@ -357,15 +364,22 @@ function selectSize(btn,size){
   selectedSize=size;
 }
 
+function showToast(msg, type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
 function addFromDetail(id){
   const p=products.find(x=>x.id===id);
-  if(p.sizes&&p.sizes.length>0&&!selectedSize){alert('请先选择尺码！');return;}
+  if(p.sizes&&p.sizes.length>0&&!selectedSize){showToast('请先选择尺码！','error');return;}
   const key=`${id}-${selectedSize||'tbd'}`;
   const ex=cart.find(x=>x.key===key);
   if(ex)ex.qty++;
   else cart.push({...p,key,size:selectedSize,qty:1});
   updateCount();
-  alert(`✓ 已加入购物车！\n${p.name}${selectedSize?' · '+selectedSize:''}`);
+  showToast(`✓ 已加入购物车！${selectedSize?' · '+selectedSize:''}`);
 }
 
 function quickAdd(id,btn){
@@ -450,8 +464,8 @@ async function checkout(total){
   const postcode=document.getElementById('buyerPostcode').value.trim();
   const state=document.getElementById('buyerState').value.trim();
 
-  if(!name||!phone){alert('请填写姓名和 WhatsApp 号码！');return;}
-  if(!address||!city||!postcode||!state){alert('请填写完整收货地址！');return;}
+  if(!name||!phone){showToast('请填写姓名和 WhatsApp 号码！','error');return;}
+  if(!address||!city||!postcode||!state){showToast('请填写完整收货地址！','error');return;}
 
   const items=cart.map(i=>({
     name:i.name,
@@ -483,12 +497,12 @@ async function checkout(total){
     if(data.payment_url){
       window.location.href=data.payment_url;
     }else{
-      alert('付款出现问题，请 WhatsApp 我们：+60 10-234 7825');
+      showToast('付款出现问题，请 WhatsApp 我们！','error');
       btn.textContent='前往付款 →';
       btn.disabled=false;
     }
   }catch(err){
-    alert('网络错误，请稍后再试或 WhatsApp 我们：+60 10-234 7825');
+      showToast('网络错误，请稍后再试！','error');
     btn.textContent='前往付款 →';
     btn.disabled=false;
   }

@@ -477,7 +477,25 @@ function toggleNav(){
 }
 
 if('scrollRestoration' in history)history.scrollRestoration='manual';
-renderProducts();
+
+// Load inventory from Google Sheets then render
+async function loadInventory(){
+  try{
+    const res=await fetch('/api/get-inventory');
+    const inventory=await res.json();
+    // Update product sizes with live stock
+    products.forEach(p=>{
+      if(inventory[p.sku]){
+        p.sizes=Object.entries(inventory[p.sku]).map(([size,stock])=>({uk:size,stock}));
+      }
+    });
+  }catch(e){
+    console.log('Using default inventory');
+  }
+  renderProducts();
+}
+
+loadInventory();
 </script>
 </body>
 </html>

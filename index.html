@@ -423,10 +423,17 @@ function renderCart(){
     <div style="border-top:2px solid #f0f0f0;margin-top:.5rem;padding-top:1rem">
       <div class="cart-total"><span class="total-label">订单总计</span><span class="total-val">RM ${total}</span></div>
       <div style="background:#f8f8f8;border-radius:10px;padding:1rem;margin:1rem 0">
-        <div style="font-size:12px;font-weight:600;margin-bottom:.75rem;color:#1A1A2E">填写联系资料</div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:.75rem;color:#1A1A2E">联系资料</div>
         <input id="buyerName" class="f-input" placeholder="姓名 *" style="margin-bottom:8px">
         <input id="buyerPhone" class="f-input" placeholder="WhatsApp 号码 * （例：0123456789）" style="margin-bottom:8px">
         <input id="buyerEmail" class="f-input" placeholder="电子邮件（选填）" style="margin-bottom:0">
+      </div>
+      <div style="background:#f8f8f8;border-radius:10px;padding:1rem;margin:1rem 0">
+        <div style="font-size:12px;font-weight:600;margin-bottom:.75rem;color:#1A1A2E">收货地址</div>
+        <input id="buyerAddress" class="f-input" placeholder="地址 * （例：No 12, Jalan ABC）" style="margin-bottom:8px">
+        <input id="buyerCity" class="f-input" placeholder="城市 * （例：Melaka）" style="margin-bottom:8px">
+        <input id="buyerPostcode" class="f-input" placeholder="邮政编码 * （例：75000）" style="margin-bottom:8px">
+        <input id="buyerState" class="f-input" placeholder="州属 * （例：Melaka）" style="margin-bottom:0">
       </div>
       <button class="checkout-btn" onclick="checkout(${total})">前往付款 →</button>
       <div style="text-align:center;font-size:11px;color:#aaa;margin-top:.75rem">🔒 安全付款，由 Billplz 提供支持</div>
@@ -438,8 +445,13 @@ async function checkout(total){
   const name=document.getElementById('buyerName').value.trim();
   const phone=document.getElementById('buyerPhone').value.trim();
   const email=document.getElementById('buyerEmail').value.trim();
+  const address=document.getElementById('buyerAddress').value.trim();
+  const city=document.getElementById('buyerCity').value.trim();
+  const postcode=document.getElementById('buyerPostcode').value.trim();
+  const state=document.getElementById('buyerState').value.trim();
 
   if(!name||!phone){alert('请填写姓名和 WhatsApp 号码！');return;}
+  if(!address||!city||!postcode||!state){alert('请填写完整收货地址！');return;}
 
   const items=cart.map(i=>({
     name:i.name,
@@ -463,6 +475,7 @@ async function checkout(total){
         email:email||'noreply@kicklab.com',
         amount:total,
         items,
+        address:`${address}, ${postcode} ${city}, ${state}`,
         redirect_url:window.location.origin,
       }),
     });

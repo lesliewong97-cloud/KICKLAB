@@ -407,8 +407,56 @@ function renderCart(){
     </div>
   `).join('');
   const total=cart.reduce((a,b)=>a+b.price*b.qty,0);
-  ft.innerHTML=`<div class="cart-total"><span class="total-label">总计</span><span class="total-val">RM ${total}</span></div>
-  <button class="checkout-btn" onclick="alert('感谢你的订单！\\n我们将通过 WhatsApp (+60 10-234 7825) 联系你确认详情。');cart=[];updateCount();closeCart()">结账 →</button>`;
+  ft.innerHTML=`
+    <div class="cart-total"><span class="total-label">总计</span><span class="total-val">RM ${total}</span></div>
+    <div style="margin-bottom:10px">
+      <input id="buyerName" class="f-input" placeholder="你的姓名 *" style="margin-bottom:8px">
+      <input id="buyerPhone" class="f-input" placeholder="WhatsApp 号码 *" style="margin-bottom:8px">
+      <input id="buyerEmail" class="f-input" placeholder="电子邮件（选填）">
+    </div>
+    <button class="checkout-btn" onclick="checkout(${total})">前往付款 →</button>
+  `;
+}
+
+async function checkout(total){
+  const name=document.getElementById('buyerName').value.trim();
+  const phone=document.getElementById('buyerPhone').value.trim();
+  const email=document.getElementById('buyerEmail').value.trim();
+
+  if(!name||!phone){alert('请填写姓名和 WhatsApp 号码！');return;}
+
+  const desc=cart.map(i=>`${i.name}${i.size?' UK'+i.size:''} x${i.qty}`).join(', ');
+
+  const btn=document.querySelector('.checkout-btn');
+  btn.textContent='处理中...';
+  btn.disabled=true;
+
+  try{
+    const res=await fetch('/api/create-bill',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name,
+        phone,
+        email:email||'noreply@kicklab.com',
+        amount:total,
+        description:desc,
+        redirect_url:window.location.origin,
+      }),
+    });
+    const data=await res.json();
+    if(data.payment_url){
+      window.location.href=data.payment_url;
+    }else{
+      alert('付款出现问题，请 WhatsApp 我们：+60 10-234 7825');
+      btn.textContent='前往付款 →';
+      btn.disabled=false;
+    }
+  }catch(err){
+    alert('网络错误，请稍后再试或 WhatsApp 我们：+60 10-234 7825');
+    btn.textContent='前往付款 →';
+    btn.disabled=false;
+  }
 }
 
 function removeItem(key){

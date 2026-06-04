@@ -498,7 +498,25 @@ function renderCart(){
         <input id="buyerAddress" class="f-input" placeholder="地址 * （例：No 12, Jalan ABC）" style="margin-bottom:8px">
         <input id="buyerCity" class="f-input" placeholder="城市 * （例：Melaka）" style="margin-bottom:8px">
         <input id="buyerPostcode" class="f-input" placeholder="邮政编码 * （例：75000）" style="margin-bottom:8px">
-        <input id="buyerState" class="f-input" placeholder="州属 * （例：Melaka）" style="margin-bottom:0">
+        <select id="buyerState" class="f-input" style="margin-bottom:0">
+          <option value="">选择州属 *</option>
+          <option>Johor</option>
+          <option>Kedah</option>
+          <option>Kelantan</option>
+          <option>Kuala Lumpur</option>
+          <option>Labuan</option>
+          <option>Melaka</option>
+          <option>Negeri Sembilan</option>
+          <option>Pahang</option>
+          <option>Penang</option>
+          <option>Perak</option>
+          <option>Perlis</option>
+          <option>Putrajaya</option>
+          <option>Sabah</option>
+          <option>Sarawak</option>
+          <option>Selangor</option>
+          <option>Terengganu</option>
+        </select>
       </div>
       <button class="checkout-btn" onclick="checkout(${total})">前往付款 →</button>
       <div style="text-align:center;font-size:11px;color:#aaa;margin-top:.75rem">🔒 安全付款，由 Billplz 提供支持</div>

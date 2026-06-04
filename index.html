@@ -234,7 +234,7 @@ nav{background:#1A1A2E;padding:0 4rem;display:flex;align-items:center;justify-co
 
 <style>
 /* PRODUCT DETAIL PAGE */
-.detail-page{display:none;padding:2.5rem 4rem}
+.detail-page{display:none;padding:1.5rem 4rem}
 .detail-page.active{display:block}
 .back-btn{background:none;border:none;font-size:13px;color:#888;cursor:pointer;font-family:var(--font-body);padding:0;margin-bottom:1.5rem;display:flex;align-items:center;gap:6px}
 .back-btn:hover{color:#1A1A2E}
@@ -336,7 +336,8 @@ function openProduct(id){
   `;
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   detail.classList.add('active');
-  window.scrollTo(0,0);
+  document.documentElement.scrollTop=0;
+  document.body.scrollTop=0;
 }
 
 function closeProduct(){

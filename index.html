@@ -15,8 +15,8 @@
   --font-head:'Barlow Condensed',sans-serif;
   --font-body:'DM Sans',sans-serif;
 }
-body{font-family:var(--font-body);background:#fff;color:#1A1A2E;height:100vh;overflow:hidden;display:flex;flex-direction:column}
-.frame{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+body{font-family:var(--font-body);background:#fff;color:#1A1A2E;min-height:100vh}
+.frame{width:100%;background:#fff;min-height:100vh}
 
 /* NAV */
 nav{background:#1A1A2E;padding:0 4rem;display:flex;align-items:center;justify-content:space-between;height:58px;flex-shrink:0;position:sticky;top:0;z-index:50}
@@ -424,14 +424,14 @@ function openProduct(id){
   `;
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   detail.classList.add('active');
-  document.querySelector('.frame').scrollTop=0;
+  setTimeout(()=>window.scrollTo({top:0,behavior:'instant'}),0);
 }
 
 function closeProduct(){
   document.getElementById('page-detail').classList.remove('active');
   document.getElementById('page-shop').classList.add('active');
   document.querySelectorAll('.nav-links a')[0].classList.add('active');
-  document.querySelector('.frame').scrollTop=0;
+  window.scrollTo(0,0);
 }
 
 function selectSize(btn,size){
@@ -520,7 +520,7 @@ function showPage(name,link){
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
   link.classList.add('active');
-  document.querySelector('.frame').scrollTop=0;
+  window.scrollTo(0,0);
   document.getElementById('navLinks').classList.remove('open');
 }
 

@@ -411,7 +411,7 @@ function initCarousel(){
   if(!track||!dots||!featured.length) return;
 
   track.innerHTML=featured.map((p,i)=>`
-    <div class="carousel-slide" onclick="openProduct(${p.id})">
+    <div class="carousel-slide" onclick="window.open('/#${p.slug}','_blank')">
       <div class="carousel-info">
         <div class="carousel-label">${p.brand} · ${p.colorway.split('/')[0].trim()}</div>
         <div class="carousel-name">${p.name.replace(/'/g,'&#39;')}</div>
@@ -419,7 +419,7 @@ function initCarousel(){
           ${p.retail?`<span class="carousel-retail">RM ${p.retail}</span>`:''}
           <span class="carousel-price">RM ${p.price}</span>
         </div>
-        <button class="carousel-btn">Shop Now →</button>
+        <button class="carousel-btn" onclick="event.stopPropagation();window.open('/#${p.slug}','_blank')">Shop Now →</button>
       </div>
       <img class="carousel-img" src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
     </div>

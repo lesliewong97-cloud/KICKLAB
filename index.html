@@ -751,6 +751,7 @@ async function checkout(total){
         items,
         address:`${address1}${address2?', '+address2:''}, ${postcode} ${city}, ${state}`,
         shipping,
+        orderNum,
         redirect_url:window.location.origin,
       }),
     });

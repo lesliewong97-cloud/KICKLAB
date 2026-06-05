@@ -821,27 +821,31 @@ async function loadInventory(){
   renderProducts();
 }
 
-loadInventory();
+// Handle payment success redirect - run FIRST before inventory load
+const _params=new URLSearchParams(window.location.search);
+if(_params.get('payment')==='success'){
+  history.replaceState({},'','/');
+  // Wait for DOM then show success
+  document.addEventListener('DOMContentLoaded',()=>showSuccess());
+  // Also try immediately in case DOM is already ready
+  if(document.readyState!=='loading') showSuccess();
+} else {
+  // Handle hash-based routing
+  document.addEventListener('DOMContentLoaded',function(){
+    const hash=window.location.hash.replace('#','');
+    if(!hash||hash==='shop') return;
+    if(hash==='about'){
+      showPage('about',document.querySelectorAll('.nav-links a')[1]);
+    }else if(hash==='contact'){
+      showPage('contact',document.querySelectorAll('.nav-links a')[2]);
+    }else{
+      const p=products.find(x=>x.slug===hash||x.id===parseInt(hash.replace('product-','')));
+      if(p) openProduct(p.id,true);
+    }
+  });
+}
 
-// Handle payment success redirect
-window.addEventListener('DOMContentLoaded',function(){
-  const params=new URLSearchParams(window.location.search);
-  if(params.get('payment')==='success'){
-    history.replaceState({},'','/');
-    showSuccess();
-    return;
-  }
-  const hash=window.location.hash.replace('#','');
-  if(!hash||hash==='shop') return;
-  if(hash==='about'){
-    showPage('about',document.querySelectorAll('.nav-links a')[1]);
-  }else if(hash==='contact'){
-    showPage('contact',document.querySelectorAll('.nav-links a')[2]);
-  }else{
-    const p=products.find(x=>x.slug===hash||x.id===parseInt(hash.replace('product-','')));
-    if(p) openProduct(p.id,true);
-  }
-});
+loadInventory();
 </script>
 </body>
 </html>

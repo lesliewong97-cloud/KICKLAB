@@ -172,6 +172,22 @@ a.logo span{color:#E63946}
 .success-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .btn-wa{background:#25D366;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body);display:flex;align-items:center;gap:8px}
 .btn-shop{background:#1A1A2E;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font-body)}
+/* CATEGORY GRID */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:.5rem}
+.cat-card{background:#fff;border:1px solid #eee;border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative}
+.cat-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,0.1)}
+.cat-img{height:200px;display:flex;align-items:center;justify-content:center;font-size:64px;position:relative}
+.cat-img-sneakers{background:linear-gradient(135deg,#1A1A2E,#2d2d4e)}
+.cat-img-running{background:linear-gradient(135deg,#E63946,#c0303b)}
+.cat-img-tennis{background:linear-gradient(135deg,#25a244,#1d7a33)}
+.cat-img-apparels{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.cat-img-accessories{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+.cat-body{padding:16px 20px}
+.cat-name{font-family:var(--font-head);font-size:22px;font-weight:700;letter-spacing:.5px}
+.cat-count{font-size:12px;color:#aaa;margin-top:2px}
+.cat-arrow{position:absolute;bottom:16px;right:20px;font-size:18px;color:#ccc}
+.cat-badge{position:absolute;top:12px;right:12px;background:#E63946;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px}
+
 @media(max-width:768px){.success-wrap{padding:1.5rem}}
 @media(max-width:768px){
   nav{padding:0 1rem;position:relative}
@@ -223,20 +239,28 @@ a.logo span{color:#E63946}
       <h1>RUN<br>FASTER.<br>LOOK<br>BETTER.</h1>
       <p>Professional-grade sneakers for those who demand performance and style.</p>
       <div class="hero-btns">
-        <button class="btn-primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Shop Now</button>
+        <button class="btn-primary" onclick="document.getElementById('categories').scrollIntoView({behavior:'smooth'})">Shop Now</button>
         <button class="btn-outline" onclick="showPage('about',document.querySelectorAll('.nav-links a')[1])">Learn More</button>
       </div>
     </div>
     <div class="hero-deco">👟</div>
   </div>
-  <div class="section" id="products">
-    <div class="section-title">Featured Products</div>
-    <div class="filters">
-      <button class="filter-btn active" onclick="filterProducts('all',this)">All</button>
-      <button class="filter-btn" onclick="filterProducts('street',this)">Street</button>
-      <button class="filter-btn" onclick="filterProducts('sport',this)">Sport</button>
+  <div class="section" id="categories">
+    <div class="section-title">Shop by Category</div>
+    <div class="cat-grid" id="categoryGrid"></div>
+  </div>
+</div>
+
+<!-- CATEGORY PAGE -->
+<div class="page" id="page-category">
+  <div class="section">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:1.5rem">
+      <button class="back-btn" onclick="showPage('shop',document.querySelectorAll('.nav-links a')[0])" style="margin-bottom:0">← Shop</button>
+      <span style="color:#ccc">/</span>
+      <span id="categoryBreadcrumb" style="font-size:13px;color:#888"></span>
     </div>
-    <div class="products" id="productGrid"></div>
+    <div class="section-title" id="categoryTitle"></div>
+    <div class="products" id="categoryProductGrid" style="margin-top:1.5rem"></div>
   </div>
 </div>
 
@@ -313,40 +337,90 @@ FOR THE GAME.</div>
 
 <script>
 const products=[
-  {id:1,brand:'NIKE',name:"Dunk Low 'Miami Dolphins'",slug:'nike-dunk-low-miami-dolphins',price:199,retail:489,img:'DV0833-102.jpeg',cat:'street',badge:'new',sku:'DV0833-102',colorway:'White / Cosmic Clay / Dusty Cactus',desc:'Rock the gridiron-inspired style with the Nike Dunk Low "Miami Dolphins". Striking aqua and white colorway with durable leather construction, padded collar and plush midsole.',sizes:[],sizeNote:'Sizes coming soon. WhatsApp us to enquire.'},
-  {id:2,brand:'NIKE',name:"Court Lite 4 'White Radiant Emerald'",slug:'nike-court-lite-4-white-radiant-emerald',price:180,retail:339,img:'COURT_EMERALD.jpg',cat:'sport',badge:'new',sku:'FD6574-104',colorway:'White / Radiant Emerald / Black',desc:'Whether you\'re digging, dinking or trying to barrel a ball down the line, the NikeCourt Lite 4 helps you hold serve. Durable yet mobile with extra rubber toe area for durability.',sizes:[{uk:'UK 7',stock:1},{uk:'UK 7.5',stock:2},{uk:'UK 8',stock:5}]},
-  {id:3,brand:'NIKE',name:"Court Lite 4 'White Ghost World Indigo' (W)",slug:'nike-court-lite-4-white-ghost-world-indigo-w',price:180,retail:339,img:'COURT_PURPLE_W.jpg',cat:'sport',badge:'new',sku:'FD6575-104',colorway:'White / Ghost / World Indigo',desc:'The NikeCourt Lite 4 for women delivers durable performance and all-day comfort on and off the court. Breathable mesh upper with Phylon midsole for cushioning.',sizes:[{uk:'UK 5',stock:2},{uk:'UK 5.5',stock:2},{uk:'UK 6',stock:4},{uk:'UK 6.5',stock:5}]},
-  {id:4,brand:'NIKE',name:"Court Lite 4 Heritage 'Desert Khaki'",slug:'nike-court-lite-4-heritage-desert-khaki',price:160,retail:339,img:'COURT_KHAKI.jpeg',cat:'sport',badge:'new',sku:'HV1474-200',colorway:'Desert Khaki / Neutral Olive / Medium Olive',desc:'This special NikeCourt Lite 4 Heritage is rooted in nostalgia. The vintage NikeCourt logo and iconic colourways complement modern-day tech like the breathable mesh upper. Extra rubber in the toe area adds durability where it\'s needed most.',sizes:[{uk:'UK 7',stock:7},{uk:'UK 8',stock:11},{uk:'UK 9',stock:8},{uk:'UK 10',stock:1}]},
-  {id:5,brand:'NIKE',name:"Zoom Vomero 5 'Metallic Silver Black'",slug:'nike-zoom-vomero-5-metallic-silver-black',price:299,retail:759,img:'FJ4151-004.jpeg',cat:'sport',badge:'new',sku:'FJ4151-004',colorway:'Metallic Silver / Black / Pure Platinum / White',desc:'Carve out a new lane for yourself in the Zoom Vomero 5. A richly layered design pairs airy textiles with synthetic leather and plastic accents to create a complex upper that\'s easy to style. Zoom Air cushioning delivers a snappy, responsive ride.',sizes:[{uk:'UK 7',stock:2},{uk:'UK 7.5',stock:2},{uk:'UK 8',stock:3},{uk:'UK 8.5',stock:4},{uk:'UK 9',stock:2},{uk:'UK 9.5',stock:3}]},
-  {id:6,brand:'NIKE',name:"Dunk Low 'Midnight Navy'",slug:'nike-dunk-low-midnight-navy',price:229,retail:489,img:'HF5441-107.jpeg',cat:'street',badge:'new',sku:'HF5441-107',colorway:'White / Midnight Navy',desc:'The Nike Dunk Low "Midnight Navy" offers a sleek and versatile take on a classic silhouette. Crafted with a smooth leather upper, it features a clean white base accented by deep Midnight Navy overlays for a sophisticated, two-tone look.',sizes:[{uk:'UK 7',stock:1},{uk:'UK 7.5',stock:3},{uk:'UK 8',stock:3},{uk:'UK 8.5',stock:3},{uk:'UK 9',stock:3},{uk:'UK 9.5',stock:2},{uk:'UK 10',stock:1},{uk:'UK 11',stock:1}]},
+  {id:1,brand:'NIKE',name:"Dunk Low 'Miami Dolphins'",slug:'nike-dunk-low-miami-dolphins',price:199,retail:489,img:'DV0833-102.jpeg',cat:'sneakers',badge:'new',sku:'DV0833-102',colorway:'White / Cosmic Clay / Dusty Cactus',desc:'Rock the gridiron-inspired style with the Nike Dunk Low "Miami Dolphins". Striking aqua and white colorway with durable leather construction, padded collar and plush midsole.',sizes:[],sizeNote:'Sizes coming soon. WhatsApp us to enquire.'},
+  {id:2,brand:'NIKE',name:"Court Lite 4 'White Radiant Emerald'",slug:'nike-court-lite-4-white-radiant-emerald',price:180,retail:339,img:'COURT_EMERALD.jpg',cat:'tennis',badge:'new',sku:'FD6574-104',colorway:'White / Radiant Emerald / Black',desc:'Whether you\'re digging, dinking or trying to barrel a ball down the line, the NikeCourt Lite 4 helps you hold serve. Durable yet mobile with extra rubber toe area for durability.',sizes:[{uk:'UK 7',stock:1},{uk:'UK 7.5',stock:2},{uk:'UK 8',stock:5}]},
+  {id:3,brand:'NIKE',name:"Court Lite 4 'White Ghost World Indigo' (W)",slug:'nike-court-lite-4-white-ghost-world-indigo-w',price:180,retail:339,img:'COURT_PURPLE_W.jpg',cat:'tennis',badge:'new',sku:'FD6575-104',colorway:'White / Ghost / World Indigo',desc:'The NikeCourt Lite 4 for women delivers durable performance and all-day comfort on and off the court. Breathable mesh upper with Phylon midsole for cushioning.',sizes:[{uk:'UK 5',stock:2},{uk:'UK 5.5',stock:2},{uk:'UK 6',stock:4},{uk:'UK 6.5',stock:5}]},
+  {id:4,brand:'NIKE',name:"Court Lite 4 Heritage 'Desert Khaki'",slug:'nike-court-lite-4-heritage-desert-khaki',price:160,retail:339,img:'COURT_KHAKI.jpeg',cat:'tennis',badge:'new',sku:'HV1474-200',colorway:'Desert Khaki / Neutral Olive / Medium Olive',desc:'This special NikeCourt Lite 4 Heritage is rooted in nostalgia. The vintage NikeCourt logo and iconic colourways complement modern-day tech like the breathable mesh upper. Extra rubber in the toe area adds durability where it\'s needed most.',sizes:[{uk:'UK 7',stock:7},{uk:'UK 8',stock:11},{uk:'UK 9',stock:8},{uk:'UK 10',stock:1}]},
+  {id:5,brand:'NIKE',name:"Zoom Vomero 5 'Metallic Silver Black'",slug:'nike-zoom-vomero-5-metallic-silver-black',price:299,retail:759,img:'FJ4151-004.jpeg',cat:'sneakers',badge:'new',sku:'FJ4151-004',colorway:'Metallic Silver / Black / Pure Platinum / White',desc:'Carve out a new lane for yourself in the Zoom Vomero 5. A richly layered design pairs airy textiles with synthetic leather and plastic accents to create a complex upper that\'s easy to style. Zoom Air cushioning delivers a snappy, responsive ride.',sizes:[{uk:'UK 7',stock:2},{uk:'UK 7.5',stock:2},{uk:'UK 8',stock:3},{uk:'UK 8.5',stock:4},{uk:'UK 9',stock:2},{uk:'UK 9.5',stock:3}]},
+  {id:6,brand:'NIKE',name:"Dunk Low 'Midnight Navy'",slug:'nike-dunk-low-midnight-navy',price:229,retail:489,img:'HF5441-107.jpeg',cat:'sneakers',badge:'new',sku:'HF5441-107',colorway:'White / Midnight Navy',desc:'The Nike Dunk Low "Midnight Navy" offers a sleek and versatile take on a classic silhouette. Crafted with a smooth leather upper, it features a clean white base accented by deep Midnight Navy overlays for a sophisticated, two-tone look.',sizes:[{uk:'UK 7',stock:1},{uk:'UK 7.5',stock:3},{uk:'UK 8',stock:3},{uk:'UK 8.5',stock:3},{uk:'UK 9',stock:3},{uk:'UK 9.5',stock:2},{uk:'UK 10',stock:1},{uk:'UK 11',stock:1}]},
+];
+
+const categories=[
+  {id:'sneakers',name:'Sneakers',emoji:'👟',style:'sneakers',desc:'Lifestyle & Street Kicks'},
+  {id:'running',name:'Running',emoji:'🏃',style:'running',desc:'Performance Running Shoes'},
+  {id:'tennis',name:'Pickleball / Tennis',emoji:'🎾',style:'tennis',desc:'Court Performance Footwear'},
+  {id:'apparels',name:'Apparels',emoji:'👕',style:'apparels',desc:'Tops, Bottoms & More'},
+  {id:'accessories',name:'Accessories',emoji:'🎒',style:'accessories',desc:'Bags, Socks & Gear'},
 ];
 
 let cart=[];
-let activeFilter='all';
 let selectedSize=null;
 
-function renderProducts(){
-  const grid=document.getElementById('productGrid');
-  const list=activeFilter==='all'?products:products.filter(p=>p.cat===activeFilter);
-  grid.innerHTML=list.map(p=>`
-    <a class="card" href="/#${p.slug}" onclick="event.preventDefault();openProduct(${p.id})">
-      <div class="card-img">
-        ${p.badge?`<span class="badge badge-${p.badge==='new'?'new':'hot'}">${p.badge==='new'?'NEW':'🔥 HOT'}</span>`:''}
-        <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
-      </div>
-      <div class="card-body">
-        <div class="card-brand">${p.brand}</div>
-        <div class="card-name">${p.name}</div>
-        <div class="card-footer">
-          <div>
-            ${p.retail?`<div style="font-size:11px;color:#aaa;text-decoration:line-through">RM ${p.retail}</div>`:''}
-            <div class="price">RM ${p.price}</div>
-          </div>
-          <button class="add-btn" onclick="event.stopPropagation();quickAdd(${p.id},this)">+</button>
+function renderCategories(){
+  const grid=document.getElementById('categoryGrid');
+  if(!grid) return;
+  grid.innerHTML=categories.map(c=>{
+    const count=products.filter(p=>p.cat===c.id).length;
+    return `
+      <div class="cat-card" onclick="openCategory('${c.id}')">
+        <div class="cat-img cat-img-${c.style}">
+          <span>${c.emoji}</span>
+          ${count>0?`<span class="cat-badge">${count} items</span>`:'<span class="cat-badge" style="background:#aaa">Coming Soon</span>'}
         </div>
+        <div class="cat-body">
+          <div class="cat-name">${c.name}</div>
+          <div class="cat-count">${c.desc}</div>
+        </div>
+        <span class="cat-arrow">→</span>
       </div>
-    </a>
-  `).join('');
+    `;
+  }).join('');
+}
+
+function openCategory(catId){
+  const cat=categories.find(c=>c.id===catId);
+  const list=products.filter(p=>p.cat===catId);
+
+  document.getElementById('categoryTitle').textContent=cat.name;
+  document.getElementById('categoryBreadcrumb').textContent=cat.name;
+
+  const grid=document.getElementById('categoryProductGrid');
+  if(!list.length){
+    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#aaa">
+      <div style="font-size:48px;margin-bottom:1rem">${cat.emoji}</div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:.5rem">${cat.name} — Coming Soon</div>
+      <div style="font-size:13px">We're working on adding products to this category. Check back soon!</div>
+    </div>`;
+  } else {
+    grid.innerHTML=list.map(p=>`
+      <a class="card" href="/#${p.slug}" onclick="event.preventDefault();openProduct(${p.id})">
+        <div class="card-img">
+          ${p.badge?`<span class="badge badge-${p.badge==='new'?'new':'hot'}">${p.badge==='new'?'NEW':'🔥 HOT'}</span>`:''}
+          <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
+        </div>
+        <div class="card-body">
+          <div class="card-brand">${p.brand}</div>
+          <div class="card-name">${p.name}</div>
+          <div class="card-footer">
+            <div>
+              ${p.retail?`<div style="font-size:11px;color:#aaa;text-decoration:line-through">RM ${p.retail}</div>`:''}
+              <div class="price">RM ${p.price}</div>
+            </div>
+            <button class="add-btn" onclick="event.stopPropagation();quickAdd(${p.id},this)">+</button>
+          </div>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-category').classList.add('active');
+  window.scrollTo(0,0);
+  history.pushState({page:'category',catId},'',`/#${catId}`);
+}
+
+function renderProducts(){
+  renderCategories();
 }
 
 function openProduct(id, skipSkeleton=false){
@@ -382,7 +456,7 @@ function openProduct(id, skipSkeleton=false){
   // Load real content after short delay
   setTimeout(()=>{
     document.getElementById('detailContent').innerHTML=`
-    <button class="back-btn" onclick="showPage('shop',document.querySelectorAll('.nav-links a')[0])">← Back to Shop</button>
+    <button class="back-btn" onclick="history.back()">← Back</button>
     <div class="detail-grid">
       <div class="detail-img-wrap"><img src="${p.img}" alt="${p.name}"></div>
       <div class="detail-info">
@@ -424,12 +498,15 @@ let currentProductId=null;
 window.addEventListener('popstate',function(e){
   const page=e.state?e.state.page:'shop';
   const productId=e.state?e.state.productId:null;
+  const catId=e.state?e.state.catId:null;
   if(page==='detail'&&productId){
     openProduct(productId,true);
+  }else if(page==='category'&&catId){
+    openCategory(catId);
   }else{
     const idx={'shop':0,'about':1,'contact':2};
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page-'+page).classList.add('active');
+    document.getElementById('page-'+(page==='shop'?'shop':page)).classList.add('active');
     document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
     if(idx[page]!==undefined) document.querySelectorAll('.nav-links a')[idx[page]].classList.add('active');
     window.scrollTo(0,0);
@@ -450,6 +527,8 @@ window.addEventListener('DOMContentLoaded',function(){
     showPage('about',document.querySelectorAll('.nav-links a')[1]);
   }else if(hash==='contact'){
     showPage('contact',document.querySelectorAll('.nav-links a')[2]);
+  }else if(categories.find(c=>c.id===hash)){
+    openCategory(hash);
   }else{
     const p=products.find(x=>x.slug===hash||x.id===parseInt(hash.replace('product-','')));
     if(p) openProduct(p.id,true);
@@ -560,12 +639,6 @@ function quickAdd(id,btn){
   setTimeout(()=>btn.style.background='',400);
 }
 
-function filterProducts(cat,btn){
-  activeFilter=cat;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderProducts();
-}
 
 function updateCount(){
   document.getElementById('cartCount').textContent=cart.reduce((a,b)=>a+b.qty,0);

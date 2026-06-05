@@ -66,16 +66,8 @@ async function sendOrderEmail(bill, description, orderNum, address, shippingFee,
   const EMAIL_PASS = process.env.EMAIL_PASS;
   if (!EMAIL_USER || !EMAIL_PASS) return;
 
-  const GITHUB_BASE = 'https://raw.githubusercontent.com/lesliewong97-cloud/KICKLAB/main/';
   const amount = (parseInt(bill.paid_amount || bill.amount) / 100).toFixed(2);
   const subtotal = (parseFloat(amount) - parseFloat(shippingFee)).toFixed(2);
-
-  const itemImages = {
-    'FD6574-104': GITHUB_BASE + 'COURT_EMERALD.jpg',
-    'FD6575-104': GITHUB_BASE + 'COURT_PURPLE_W.jpg',
-    'HV1474-200': GITHUB_BASE + 'COURT_KHAKI.jpeg',
-    'DV0833-102': 'https://images.novelship.com/product/nike_dunk_low__miami_dolphins__0_75961.png?fit=fill&bg=FFFFFF&trim=color&q=75&w=200&h=200&pad=20&fm=webp',
-  };
 
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -85,19 +77,11 @@ async function sendOrderEmail(bill, description, orderNum, address, shippingFee,
   });
 
   const itemsHtml = items.map(item => {
-    const imgUrl = itemImages[item.sku] || '';
     return `
       <tr>
         <td style="padding:12px 0;border-bottom:1px solid #f0f0f0">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              ${imgUrl ? `<td width="64" style="padding-right:12px"><img src="${imgUrl}" width="64" height="64" style="border-radius:8px;object-fit:contain;background:#f8f8f8" /></td>` : ''}
-              <td>
-                <p style="margin:0;font-size:13px;font-weight:600;color:#1A1A2E">${item.sku}</p>
-                <p style="margin:2px 0;font-size:12px;color:#888">${item.size} · Qty: ${item.qty}</p>
-              </td>
-            </tr>
-          </table>
+          <p style="margin:0;font-size:13px;font-weight:600;color:#1A1A2E">👟 ${item.sku}</p>
+          <p style="margin:2px 0 0;font-size:12px;color:#888">${item.size} · Qty: ${item.qty}</p>
         </td>
       </tr>
     `;

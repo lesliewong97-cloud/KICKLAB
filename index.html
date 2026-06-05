@@ -486,7 +486,7 @@ function renderCategories(){
   }).join('');
 }
 
-function openCategory(catId){
+function openCategory(catId, skipHistory=false){
   const cat=categories.find(c=>c.id===catId);
   const list=products.filter(p=>p.cat===catId);
 
@@ -525,7 +525,9 @@ function openCategory(catId){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-category').classList.add('active');
   window.scrollTo(0,0);
-  history.pushState({page:'category',catId},'',`/#${catId}`);
+  if(!skipHistory){
+    history.pushState({page:'category',catId},'',`/#${catId}`);
+  }
 }
 
 function renderProducts(){
@@ -605,7 +607,11 @@ function showPage(name, link){
   document.getElementById('navLinks').classList.remove('open');
   const p=products.find(x=>x.id===currentProductId);
   const url=name==='shop'?'/':name==='detail'?`/#${p?p.slug:'product'}`:`/#${name}`;
-  history.pushState({page:name,productId:currentProductId},'',url);
+  if(name==='shop'){
+    history.replaceState({page:'shop'},'','/');
+  }else{
+    history.pushState({page:name,productId:currentProductId},'',url);
+  }
 }
 
 let currentProductId=null;
@@ -617,7 +623,7 @@ window.addEventListener('popstate',function(e){
   if(page==='detail'&&productId){
     openProduct(productId,true);
   }else if(page==='category'&&catId){
-    openCategory(catId);
+    openCategory(catId,true);
   }else{
     const idx={'shop':0,'about':1,'contact':2};
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -643,7 +649,7 @@ window.addEventListener('DOMContentLoaded',function(){
   }else if(hash==='contact'){
     showPage('contact',document.querySelectorAll('.nav-links a')[2]);
   }else if(categories.find(c=>c.id===hash)){
-    openCategory(hash);
+    openCategory(hash, true);
   }else{
     const p=products.find(x=>x.slug===hash||x.id===parseInt(hash.replace('product-','')));
     if(p) openProduct(p.id,true);

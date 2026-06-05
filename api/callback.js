@@ -75,32 +75,70 @@ async function sendOrderEmail(bill, description) {
     to: EMAIL_USER,
     subject: `🎉 New Order - RM${amount} | ${bill.name}`,
     html: `
-      <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
-        <div style="background:#1A1A2E;padding:20px;text-align:center">
-          <h1 style="color:#fff;margin:0;font-size:24px">KICK<span style="color:#E63946">LAB</span></h1>
-          <p style="color:rgba(255,255,255,0.6);margin:8px 0 0;font-size:14px">New Order Received!</p>
-        </div>
-        <div style="padding:24px;background:#f8f8f8">
-          <div style="background:#fff;border-radius:8px;padding:20px;margin-bottom:16px">
-            <h3 style="margin:0 0 12px;font-size:14px;color:#999;letter-spacing:1px">ORDER AMOUNT</h3>
-            <p style="font-size:32px;font-weight:700;color:#E63946;margin:0">RM${amount}</p>
-            <p style="font-size:12px;color:#999;margin:4px 0 0">${new Date().toLocaleString('en-MY',{timeZone:'Asia/Kuala_Lumpur'})}</p>
-          </div>
-          <div style="background:#fff;border-radius:8px;padding:20px;margin-bottom:16px">
-            <h3 style="margin:0 0 12px;font-size:14px;color:#999;letter-spacing:1px">CUSTOMER</h3>
-            <p style="margin:0 0 4px;font-size:14px"><strong>${bill.name}</strong></p>
-            <p style="margin:0 0 4px;font-size:13px;color:#666">📱 ${bill.mobile}</p>
-            <p style="margin:0;font-size:13px;color:#666">✉️ ${bill.email}</p>
-          </div>
-          <div style="background:#fff;border-radius:8px;padding:20px;margin-bottom:16px">
-            <h3 style="margin:0 0 12px;font-size:14px;color:#999;letter-spacing:1px">ITEMS</h3>
-            <p style="margin:0;font-size:13px;color:#444;line-height:1.6">${description.replace(/\|/g,'<br>').replace(/, /g,'<br>')}</p>
-          </div>
-          <div style="text-align:center;padding-top:8px">
-            <p style="font-size:12px;color:#999">Bill ID: ${bill.id}</p>
-          </div>
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif">
+  <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+    
+    <!-- Header -->
+    <div style="background:#1A1A2E;padding:28px 32px;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:26px;letter-spacing:3px">KICK<span style="color:#E63946">LAB</span></h1>
+      <p style="color:rgba(255,255,255,0.5);margin:6px 0 0;font-size:13px;letter-spacing:1px">NEW ORDER RECEIVED</p>
+    </div>
+
+    <!-- Amount Banner -->
+    <div style="background:#E63946;padding:20px 32px;text-align:center">
+      <p style="color:rgba(255,255,255,0.8);margin:0 0 4px;font-size:12px;letter-spacing:1px">TOTAL AMOUNT</p>
+      <p style="color:#fff;margin:0;font-size:38px;font-weight:700">RM${amount}</p>
+      <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:12px">${new Date().toLocaleString('en-MY',{timeZone:'Asia/Kuala_Lumpur',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
+    </div>
+
+    <div style="padding:28px 32px">
+
+      <!-- Customer -->
+      <div style="margin-bottom:24px">
+        <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">CUSTOMER DETAILS</p>
+        <div style="background:#f8f8f8;border-radius:8px;padding:16px">
+          <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#1A1A2E">${bill.name}</p>
+          <p style="margin:0 0 4px;font-size:13px;color:#666">📱 ${bill.mobile}</p>
+          <p style="margin:0;font-size:13px;color:#666">✉️ ${bill.email}</p>
         </div>
       </div>
+
+      <!-- Items -->
+      <div style="margin-bottom:24px">
+        <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">ITEMS ORDERED</p>
+        <div style="background:#f8f8f8;border-radius:8px;padding:16px">
+          ${description.split(', ').filter(i=>!i.startsWith('Alamat')).map(item=>`
+            <p style="margin:0 0 6px;font-size:13px;color:#333;padding-bottom:6px;border-bottom:1px solid #eee">👟 ${item}</p>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Address -->
+      <div style="margin-bottom:24px">
+        <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">SHIPPING ADDRESS</p>
+        <div style="background:#f8f8f8;border-radius:8px;padding:16px">
+          <p style="margin:0;font-size:13px;color:#555;line-height:1.7">📍 ${description.split('Alamat: ')[1] || 'Not provided'}</p>
+        </div>
+      </div>
+
+      <!-- Bill ID -->
+      <div style="text-align:center;padding-top:8px;border-top:1px solid #f0f0f0">
+        <p style="margin:12px 0 0;font-size:11px;color:#bbb">Bill ID: ${bill.id}</p>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#f8f8f8;padding:16px 32px;text-align:center">
+      <p style="margin:0;font-size:12px;color:#aaa">KICKLAB · kicklab.com.my</p>
+    </div>
+
+  </div>
+</body>
+</html>
     `,
   });
 

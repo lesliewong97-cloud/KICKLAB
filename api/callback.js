@@ -24,10 +24,13 @@ export default async function handler(req, res) {
 
     const description = bill.description || '';
     const items = parseDescription(description);
+    const orderNum = (description.match(/ORDER:([A-Z0-9]+)/) || [])[1] || 'N/A';
+    const address = (description.match(/Alamat: ([^|]+)/) || [])[1]?.trim() || '';
+    const shippingFee = (description.match(/Shipping: RM([\d.]+)/) || [])[1] || '0';
 
     await Promise.all([
       items.length > 0 ? updateInventory(items) : Promise.resolve(),
-      sendOrderEmail(bill, description),
+      sendOrderEmail(bill, description, orderNum, address, shippingFee, items),
     ]);
 
     return res.redirect(302, '/?payment=success');
@@ -56,12 +59,21 @@ function parseDescription(desc) {
   return items;
 }
 
-async function sendOrderEmail(bill, description) {
+async function sendOrderEmail(bill, description, orderNum, address, shippingFee, items) {
   const EMAIL_USER = process.env.EMAIL_USER;
   const EMAIL_PASS = process.env.EMAIL_PASS;
   if (!EMAIL_USER || !EMAIL_PASS) return;
 
+  const GITHUB_BASE = 'https://raw.githubusercontent.com/lesliewong97-cloud/KICKLAB/main/';
   const amount = (parseInt(bill.paid_amount || bill.amount) / 100).toFixed(2);
+  const subtotal = (parseFloat(amount) - parseFloat(shippingFee)).toFixed(2);
+
+  const itemImages = {
+    'FD6574-104': GITHUB_BASE + 'COURT_EMERALD.jpg',
+    'FD6575-104': GITHUB_BASE + 'COURT_PURPLE_W.jpg',
+    'HV1474-200': GITHUB_BASE + 'COURT_KHAKI.jpeg',
+    'DV0833-102': 'https://images.novelship.com/product/nike_dunk_low__miami_dolphins__0_75961.png?fit=fill&bg=FFFFFF&trim=color&q=75&w=200&h=200&pad=20&fm=webp',
+  };
 
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
@@ -70,65 +82,108 @@ async function sendOrderEmail(bill, description) {
     auth: { user: EMAIL_USER, pass: EMAIL_PASS },
   });
 
+  const itemsHtml = items.map(item => {
+    const imgUrl = itemImages[item.sku] || '';
+    return `
+      <tr>
+        <td style="padding:12px 0;border-bottom:1px solid #f0f0f0">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              ${imgUrl ? `<td width="64" style="padding-right:12px"><img src="${imgUrl}" width="64" height="64" style="border-radius:8px;object-fit:contain;background:#f8f8f8" /></td>` : ''}
+              <td>
+                <p style="margin:0;font-size:13px;font-weight:600;color:#1A1A2E">${item.sku}</p>
+                <p style="margin:2px 0;font-size:12px;color:#888">${item.size} · Qty: ${item.qty}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
   await transporter.sendMail({
     from: `"KICKLAB" <${EMAIL_USER}>`,
     to: EMAIL_USER,
-    subject: `🎉 New Order - RM${amount} | ${bill.name}`,
+    subject: `🎉 New Order #${orderNum} - RM${amount} | ${bill.name}`,
     html: `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif">
   <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-    
+
     <!-- Header -->
     <div style="background:#1A1A2E;padding:28px 32px;text-align:center">
       <h1 style="color:#fff;margin:0;font-size:26px;letter-spacing:3px">KICK<span style="color:#E63946">LAB</span></h1>
       <p style="color:rgba(255,255,255,0.5);margin:6px 0 0;font-size:13px;letter-spacing:1px">NEW ORDER RECEIVED</p>
     </div>
 
-    <!-- Amount Banner -->
-    <div style="background:#E63946;padding:20px 32px;text-align:center">
-      <p style="color:rgba(255,255,255,0.8);margin:0 0 4px;font-size:12px;letter-spacing:1px">TOTAL AMOUNT</p>
-      <p style="color:#fff;margin:0;font-size:38px;font-weight:700">RM${amount}</p>
-      <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:12px">${new Date().toLocaleString('en-MY',{timeZone:'Asia/Kuala_Lumpur',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
+    <!-- Order Number + Amount Banner -->
+    <div style="background:#E63946;padding:20px 32px">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <p style="color:rgba(255,255,255,0.8);margin:0 0 2px;font-size:11px;letter-spacing:1px">ORDER NUMBER</p>
+            <p style="color:#fff;margin:0;font-size:22px;font-weight:700">#${orderNum}</p>
+          </td>
+          <td style="text-align:right">
+            <p style="color:rgba(255,255,255,0.8);margin:0 0 2px;font-size:11px;letter-spacing:1px">TOTAL</p>
+            <p style="color:#fff;margin:0;font-size:28px;font-weight:700">RM${amount}</p>
+          </td>
+        </tr>
+      </table>
+      <p style="color:rgba(255,255,255,0.6);margin:8px 0 0;font-size:12px">${new Date().toLocaleString('en-MY',{timeZone:'Asia/Kuala_Lumpur',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
     </div>
 
     <div style="padding:28px 32px">
 
       <!-- Customer -->
       <div style="margin-bottom:24px">
-        <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">CUSTOMER DETAILS</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:16px">
-          <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#1A1A2E">${bill.name}</p>
-          <p style="margin:0 0 4px;font-size:13px;color:#666">📱 ${bill.mobile}</p>
+        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">CUSTOMER</p>
+        <div style="background:#f8f8f8;border-radius:8px;padding:14px 16px">
+          <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#1A1A2E">${bill.name}</p>
+          <p style="margin:0 0 3px;font-size:13px;color:#666">📱 ${bill.mobile}</p>
           <p style="margin:0;font-size:13px;color:#666">✉️ ${bill.email}</p>
         </div>
       </div>
 
       <!-- Items -->
       <div style="margin-bottom:24px">
-        <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">ITEMS ORDERED</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:16px">
-          ${description.split(', ').filter(i=>!i.startsWith('Alamat')).map(item=>`
-            <p style="margin:0 0 6px;font-size:13px;color:#333;padding-bottom:6px;border-bottom:1px solid #eee">👟 ${item}</p>
-          `).join('')}
+        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">ITEMS ORDERED</p>
+        <div style="background:#f8f8f8;border-radius:8px;padding:4px 16px">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${itemsHtml}
+          </table>
         </div>
       </div>
 
-      <!-- Address -->
+      <!-- Shipping Address -->
       <div style="margin-bottom:24px">
-        <p style="margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">SHIPPING ADDRESS</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:16px">
-          <p style="margin:0;font-size:13px;color:#555;line-height:1.7">📍 ${description.split('Alamat: ')[1] || 'Not provided'}</p>
+        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">SHIPPING ADDRESS</p>
+        <div style="background:#f8f8f8;border-radius:8px;padding:14px 16px">
+          <p style="margin:0;font-size:13px;color:#555;line-height:1.7">📍 ${address || 'Not provided'}</p>
         </div>
       </div>
 
-      <!-- Bill ID -->
-      <div style="text-align:center;padding-top:8px;border-top:1px solid #f0f0f0">
-        <p style="margin:12px 0 0;font-size:11px;color:#bbb">Bill ID: ${bill.id}</p>
+      <!-- Price Breakdown -->
+      <div style="border-top:2px solid #f0f0f0;padding-top:16px">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-size:13px;color:#888;padding-bottom:6px">Subtotal</td>
+            <td style="text-align:right;font-size:13px;color:#888;padding-bottom:6px">RM${subtotal}</td>
+          </tr>
+          <tr>
+            <td style="font-size:13px;color:#888;padding-bottom:10px">Shipping (J&T)</td>
+            <td style="text-align:right;font-size:13px;color:#888;padding-bottom:10px">RM${shippingFee}</td>
+          </tr>
+          <tr>
+            <td style="font-size:15px;font-weight:700;color:#1A1A2E">Total Paid</td>
+            <td style="text-align:right;font-size:20px;font-weight:700;color:#E63946">RM${amount}</td>
+          </tr>
+        </table>
       </div>
 
+      <p style="text-align:center;font-size:11px;color:#ccc;margin-top:20px">Bill ID: ${bill.id}</p>
     </div>
 
     <!-- Footer -->

@@ -501,8 +501,11 @@ function showSuccess(){
         </div>
       </div>
       <div class="order-total">
-        <span class="order-total-label">Total Paid</span>
-        <span class="order-total-val">RM ${order.total}</span>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px"><span>Subtotal</span><span>RM ${order.subtotal}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:8px"><span>Shipping (J&T)</span><span>RM ${order.shipping}</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span class="order-total-label">Total Paid</span><span class="order-total-val">RM ${order.total}</span></div>
+        </div>
       </div>
     </div>
 
@@ -577,6 +580,38 @@ function closeCart(){
 }
 function closeCartOutside(e){if(e.target===document.getElementById('cartOverlay'))closeCart()}
 
+function calcShipping(state, totalQty){
+  const eastMalaysia=['Sabah','Sarawak','Labuan'];
+  const isEast=eastMalaysia.includes(state);
+  const kg=totalQty; // 1kg per pair
+  if(isEast){
+    return 22 + Math.max(0, kg-1)*3;
+  } else {
+    return 7 + Math.max(0, kg-1)*1;
+  }
+}
+
+function updateShippingDisplay(){
+  const state=document.getElementById('buyerState')?.value;
+  const totalQty=cart.reduce((a,b)=>a+b.qty,0);
+  const subtotal=cart.reduce((a,b)=>a+b.price*b.qty,0);
+  const shippingEl=document.getElementById('shippingFee');
+  const totalEl=document.getElementById('grandTotal');
+  const checkoutBtn=document.querySelector('.checkout-btn');
+  if(!shippingEl||!totalEl) return;
+  if(!state){
+    shippingEl.textContent='Select state to calculate';
+    totalEl.textContent=`RM ${subtotal}`;
+    if(checkoutBtn) checkoutBtn.textContent='Proceed to Pay →';
+    return;
+  }
+  const shipping=calcShipping(state, totalQty);
+  const grand=subtotal+shipping;
+  shippingEl.textContent=`RM ${shipping}`;
+  totalEl.textContent=`RM ${grand}`;
+  if(checkoutBtn) checkoutBtn.textContent=`Proceed to Pay → RM ${grand}`;
+}
+
 function renderCart(step=1){
   const el=document.getElementById('cartItems');
   const ft=document.getElementById('cartFooter');
@@ -644,7 +679,7 @@ function renderCart(step=1){
             <input id="buyerCity" class="f-input" placeholder="City *">
             <input id="buyerPostcode" class="f-input" placeholder="Postcode *">
           </div>
-          <select id="buyerState" class="f-input" style="margin-bottom:0">
+          <select id="buyerState" class="f-input" style="margin-bottom:0" onchange="updateShippingDisplay()">
             <option value="">Select State *</option>
             <option>Johor</option><option>Kedah</option><option>Kelantan</option>
             <option>Kuala Lumpur</option><option>Labuan</option><option>Melaka</option>
@@ -658,6 +693,15 @@ function renderCart(step=1){
     `;
     ft.innerHTML=`
       <div style="border-top:2px solid #f0f0f0;padding-top:1rem">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#888;margin-bottom:6px">
+          <span>Subtotal</span><span>RM ${total}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#888;margin-bottom:10px">
+          <span>Shipping (J&T)</span><span id="shippingFee" style="color:#1A1A2E">Select state to calculate</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;margin-bottom:1rem">
+          <span>Total</span><span id="grandTotal" style="color:#E63946;font-family:var(--font-head);font-size:22px">RM ${total}</span>
+        </div>
         <button class="checkout-btn" onclick="checkout(${total})">Proceed to Pay →</button>
         <div style="text-align:center;font-size:11px;color:#aaa;margin-top:.75rem">🔒 Secure payment powered by Billplz</div>
       </div>
@@ -677,6 +721,10 @@ async function checkout(total){
 
   if(!name||!phone){showToast('Please fill in your name and WhatsApp number!','error');return;}
   if(!address1||!city||!postcode||!state){showToast('Please fill in your complete shipping address!','error');return;}
+
+  const totalQty=cart.reduce((a,b)=>a+b.qty,0);
+  const shipping=calcShipping(state, totalQty);
+  const grandTotal=total+shipping;
 
   const items=cart.map(i=>({
     name:i.name,
@@ -698,9 +746,10 @@ async function checkout(total){
         name,
         phone,
         email:email||'noreply@kicklab.com',
-        amount:total,
+        amount:grandTotal,
         items,
         address:`${address1}${address2?', '+address2:''}, ${postcode} ${city}, ${state}`,
+        shipping,
         redirect_url:window.location.origin,
       }),
     });
@@ -715,7 +764,9 @@ async function checkout(total){
         name,phone,
         address:`${address1}${address2?', '+address2:''}, ${postcode} ${city}, ${state}`,
         items:cart.map(i=>({brand:i.brand,name:i.name,img:i.img,size:i.size,qty:i.qty,price:i.price})),
-        total,
+        subtotal:total,
+        shipping,
+        total:grandTotal,
       }));
       window.location.href=data.payment_url;
     }else{

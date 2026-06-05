@@ -23,8 +23,10 @@ export default async function handler(req, res) {
     const bill = await billRes.json();
 
     const description = bill.description || '';
+    console.log('Full description:', description);
     const items = parseDescription(description);
     const orderNum = (description.match(/ORDER:([A-Z0-9]+)/) || [])[1] || 'N/A';
+    console.log('Parsed orderNum:', orderNum);
     const address = (description.match(/Alamat: ([^|]+)/) || [])[1]?.trim() || '';
     const shippingFee = (description.match(/Shipping: RM([\d.]+)/) || [])[1] || '0';
 

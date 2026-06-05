@@ -739,6 +739,8 @@ async function checkout(total){
   btn.textContent='Processing...';
   btn.disabled=true;
 
+  const orderNum='KL'+Date.now().toString().slice(-6);
+
   try{
     const res=await fetch('/api/create-bill',{
       method:'POST',
@@ -757,8 +759,6 @@ async function checkout(total){
     });
     const data=await res.json();
     if(data.payment_url){
-      // Save order data for success page
-      const orderNum='KL'+Date.now().toString().slice(-6);
       const now=new Date();
       const date=now.toLocaleDateString('en-MY',{day:'numeric',month:'short',year:'numeric'});
       sessionStorage.setItem('lastOrder',JSON.stringify({

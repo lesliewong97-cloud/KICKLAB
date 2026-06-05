@@ -260,8 +260,17 @@ a.logo span{color:#E63946}
 
 <!-- SHOP PAGE -->
 <div class="page active" id="page-shop">
-  <div class="hero">
-    <div class="hero-inner">
+  <div class="hero" style="position:relative;overflow:hidden;padding:0">
+    <div style="position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden">
+      <iframe
+        src="https://www.youtube.com/embed/EGTwBbkHlfc?autoplay=1&mute=1&loop=1&playlist=EGTwBbkHlfc&controls=0&showinfo=0&rel=0&disablekb=1&modestbranding=1"
+        style="position:absolute;top:50%;left:50%;width:177.78vh;min-width:100%;height:56.25vw;min-height:100%;transform:translate(-50%,-50%);border:none;pointer-events:none"
+        allow="autoplay; encrypted-media"
+        allowfullscreen>
+      </iframe>
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,0.5)"></div>
+    </div>
+    <div class="hero-inner" style="position:relative;z-index:1;padding:4rem">
       <div class="hero-tag">NEW SEASON 2025 · MALAYSIA</div>
       <h1>RUN<br>FASTER.<br>LOOK<br>BETTER.</h1>
       <p>Professional-grade sneakers for those who demand performance and style.</p>
@@ -270,7 +279,6 @@ a.logo span{color:#E63946}
         <button class="btn-outline" onclick="showPage('about',document.querySelectorAll('.nav-links a')[1])">Learn More</button>
       </div>
     </div>
-    <div class="hero-deco">👟</div>
   </div>
   <!-- FEATURED CAROUSEL -->
   <div class="carousel-section">

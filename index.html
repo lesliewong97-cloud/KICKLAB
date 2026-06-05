@@ -182,10 +182,10 @@ a.logo span{color:#E63946}
 .cat-img-tennis{background:linear-gradient(135deg,#25a244,#1d7a33)}
 .cat-img-apparels{background:linear-gradient(135deg,#f59e0b,#d97706)}
 .cat-img-accessories{background:linear-gradient(135deg,#6366f1,#4f46e5)}
-.cat-body{padding:16px 20px}
+.cat-body{padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
 .cat-name{font-family:var(--font-head);font-size:22px;font-weight:700;letter-spacing:.5px}
 .cat-count{font-size:12px;color:#aaa;margin-top:2px}
-.cat-arrow{position:absolute;bottom:16px;right:20px;font-size:18px;color:#ccc}
+.cat-arrow{font-size:18px;color:#ccc;flex-shrink:0}
 .cat-badge{position:absolute;top:12px;right:12px;background:#E63946;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px}
 
 @media(max-width:768px){.success-wrap{padding:1.5rem}}
@@ -376,10 +376,11 @@ function renderCategories(){
           ${count>0?`<span class="cat-badge">${count} items</span>`:'<span class="cat-badge" style="background:#aaa">Coming Soon</span>'}
         </div>
         <div class="cat-body">
-          <div class="cat-name">${c.name}</div>
-          <div class="cat-count">${c.desc}</div>
+          <div>
+            <div class="cat-name">${c.name}</div>
+            <div class="cat-count">${c.desc}</div>
+          </div>
         </div>
-        <span class="cat-arrow">→</span>
       </div>
     `;
   }).join('');

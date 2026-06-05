@@ -1,19 +1,16 @@
+import nodemailer from 'nodemailer';
+
 export default async function handler(req, res) {
   console.log('CALLBACK BODY:', JSON.stringify(req.body));
 
-  // Billplz sends JSON body
   const bill_id = req.body?.['billplz[id]'] || req.body?.id;
   const paid = req.body?.['billplz[paid]'] || req.body?.paid;
 
-  console.log('bill_id:', bill_id, '| paid:', paid);
-
   if (paid !== 'true' && paid !== true) {
-    console.log('Payment not successful');
     return res.redirect(302, '/?payment=failed');
   }
 
   try {
-    // Fetch bill details from Billplz to get description
     const SANDBOX = process.env.BILLPLZ_SANDBOX === 'true';
     const BASE = SANDBOX
       ? 'https://www.billplz-sandbox.com/api/v3/bills'
@@ -24,18 +21,14 @@ export default async function handler(req, res) {
       headers: { Authorization: `Basic ${credentials}` },
     });
     const bill = await billRes.json();
-    console.log('Bill details:', JSON.stringify(bill));
 
     const description = bill.description || '';
     const items = parseDescription(description);
-    console.log('Parsed items:', JSON.stringify(items));
 
-    if (items.length > 0) {
-      await updateInventory(items);
-      console.log('Inventory updated!');
-    } else {
-      console.log('No items parsed from:', description);
-    }
+    await Promise.all([
+      items.length > 0 ? updateInventory(items) : Promise.resolve(),
+      sendOrderEmail(bill, description),
+    ]);
 
     return res.redirect(302, '/?payment=success');
   } catch (error) {
@@ -52,7 +45,6 @@ function parseDescription(desc) {
     const ukMatch = part.match(/UK\s?([\d.]+)/i);
     const skuMatch = part.match(/\(([A-Z0-9-]+)\)/);
     const qtyMatch = part.match(/x(\d+)$/);
-    console.log('Part:', part, '| sku:', skuMatch?.[1], '| uk:', ukMatch?.[1]);
     if (ukMatch && skuMatch) {
       items.push({
         sku: skuMatch[1],
@@ -64,10 +56,60 @@ function parseDescription(desc) {
   return items;
 }
 
+async function sendOrderEmail(bill, description) {
+  const EMAIL_USER = process.env.EMAIL_USER;
+  const EMAIL_PASS = process.env.EMAIL_PASS;
+  if (!EMAIL_USER || !EMAIL_PASS) return;
+
+  const amount = (parseInt(bill.paid_amount || bill.amount) / 100).toFixed(2);
+
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+  });
+
+  await transporter.sendMail({
+    from: `"KICKLAB" <${EMAIL_USER}>`,
+    to: EMAIL_USER,
+    subject: `🎉 New Order - RM${amount} | ${bill.name}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
+        <div style="background:#1A1A2E;padding:20px;text-align:center">
+          <h1 style="color:#fff;margin:0;font-size:24px">KICK<span style="color:#E63946">LAB</span></h1>
+          <p style="color:rgba(255,255,255,0.6);margin:8px 0 0;font-size:14px">New Order Received!</p>
+        </div>
+        <div style="padding:24px;background:#f8f8f8">
+          <div style="background:#fff;border-radius:8px;padding:20px;margin-bottom:16px">
+            <h3 style="margin:0 0 12px;font-size:14px;color:#999;letter-spacing:1px">ORDER AMOUNT</h3>
+            <p style="font-size:32px;font-weight:700;color:#E63946;margin:0">RM${amount}</p>
+            <p style="font-size:12px;color:#999;margin:4px 0 0">${new Date().toLocaleString('en-MY',{timeZone:'Asia/Kuala_Lumpur'})}</p>
+          </div>
+          <div style="background:#fff;border-radius:8px;padding:20px;margin-bottom:16px">
+            <h3 style="margin:0 0 12px;font-size:14px;color:#999;letter-spacing:1px">CUSTOMER</h3>
+            <p style="margin:0 0 4px;font-size:14px"><strong>${bill.name}</strong></p>
+            <p style="margin:0 0 4px;font-size:13px;color:#666">📱 ${bill.mobile}</p>
+            <p style="margin:0;font-size:13px;color:#666">✉️ ${bill.email}</p>
+          </div>
+          <div style="background:#fff;border-radius:8px;padding:20px;margin-bottom:16px">
+            <h3 style="margin:0 0 12px;font-size:14px;color:#999;letter-spacing:1px">ITEMS</h3>
+            <p style="margin:0;font-size:13px;color:#444;line-height:1.6">${description.replace(/\|/g,'<br>').replace(/, /g,'<br>')}</p>
+          </div>
+          <div style="text-align:center;padding-top:8px">
+            <p style="font-size:12px;color:#999">Bill ID: ${bill.id}</p>
+          </div>
+        </div>
+      </div>
+    `,
+  });
+
+  console.log('Order email sent to', EMAIL_USER);
+}
+
 async function updateInventory(items) {
   const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
   const sheetId = process.env.GOOGLE_SHEETS_ID;
-
   const token = await getAccessToken(serviceAccount);
 
   const readRes = await fetch(
@@ -83,7 +125,6 @@ async function updateInventory(items) {
       const [sku, size, stock] = rows[i];
       if (sku === item.sku && size === item.size) {
         const newStock = Math.max(0, parseInt(stock) - item.qty);
-        console.log(`${sku} ${size}: ${stock} -> ${newStock}`);
         updates.push({ range: `Sheet1!C${i + 1}`, values: [[newStock]] });
       }
     }

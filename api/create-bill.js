@@ -41,7 +41,7 @@ export default async function handler(req, res) {
         amount: String(Math.round(amount * 100)),
         description: description,
         callback_url: callbackUrl,
-        redirect_url: redirect_url || 'https://kicklab-nu.vercel.app',
+        redirect_url: (redirect_url || 'https://kicklab-nu.vercel.app') + '?payment=success',
       }),
     });
 

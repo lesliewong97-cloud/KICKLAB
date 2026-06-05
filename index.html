@@ -476,7 +476,7 @@ function openProduct(id, skipSkeleton=false){
             :`<div style="font-size:13px;color:#888">${p.sizeNote||'Sizes coming soon'}</div>`}
         </div>
         <button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>
-        <button class="detail-wa-btn" onclick="window.open('https://wa.me/60102347825?text=Hi, I would like to enquire about ${encodeURIComponent(p.name)} (${p.sku})','_blank')">💬 WhatsApp Us</button>
+        <button class="detail-wa-btn" onclick="window.open('https://wa.me/60102347825?text='+encodeURIComponent('Hi, I would like to enquire about ${p.name} (${p.sku})'), '_blank')">💬 WhatsApp Us</button>
         <div class="detail-desc"><h4>Product Description</h4><p>${p.desc}</p></div>
       </div>
     </div>

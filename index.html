@@ -532,7 +532,7 @@ function renderProducts(){
   renderCategories();
 }
 
-function openProduct(id, skipSkeleton=false){
+function openProduct(id, skipHistory=false){
   const p=products.find(x=>x.id===id);
   selectedSize=null;
   currentProductId=id;
@@ -560,7 +560,13 @@ function openProduct(id, skipSkeleton=false){
       @media(max-width:768px){.detail-skel-grid{grid-template-columns:1fr!important}}
     </style>
   `;
-  showPage('detail', null);
+  document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
+  document.getElementById('page-detail').classList.add('active');
+  window.scrollTo(0,0);
+  if(!skipHistory){
+    const url=`/#${p.slug}`;
+    history.pushState({page:'detail',productId:id},'',url);
+  }
 
   // Load real content after short delay
   setTimeout(()=>{

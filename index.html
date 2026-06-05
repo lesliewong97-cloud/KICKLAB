@@ -260,22 +260,24 @@ a.logo span{color:#E63946}
 
 <!-- SHOP PAGE -->
 <div class="page active" id="page-shop">
-  <div class="hero" style="position:relative;overflow:hidden;padding:0">
+  <div class="hero" style="position:relative;overflow:hidden;padding:0;height:500px;display:flex;align-items:center">
     <div style="position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden">
       <video autoplay muted loop playsinline
         style="position:absolute;top:50%;left:50%;min-width:100%;min-height:100%;width:auto;height:auto;transform:translate(-50%,-50%);object-fit:cover">
         <source src="hero.mp4" type="video/mp4">
       </video>
-      <div style="position:absolute;inset:0;background:rgba(0,0,0,0.5)"></div>
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,0.55)"></div>
+    </div>
+    <div style="position:relative;z-index:1;padding:4rem;max-width:520px">
+      <div style="font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.5);margin-bottom:1rem;text-transform:uppercase">New Season 2025 · Malaysia</div>
+      <div style="font-family:var(--font-head);font-size:64px;font-weight:700;color:#fff;letter-spacing:3px;line-height:1">EVERY STEP</div>
+      <div style="font-family:var(--font-head);font-size:64px;font-weight:700;color:#E63946;letter-spacing:3px;line-height:1.1">TELLS A STORY.</div>
     </div>
   </div>
-  <!-- TAGLINE SECTION -->
-  <div style="background:#0d0d0d;padding:4rem 2rem;text-align:center">
-    <div style="font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.4);margin-bottom:1.5rem;text-transform:uppercase">New Season 2025 · Malaysia</div>
-    <div style="font-family:var(--font-head);font-size:64px;font-weight:700;color:#fff;letter-spacing:4px;line-height:1">EVERY STEP</div>
-    <div style="font-family:var(--font-head);font-size:64px;font-weight:700;color:#E63946;letter-spacing:4px;line-height:1.2">TELLS A STORY.</div>
-    <div style="width:60px;height:3px;background:#E63946;margin:1.5rem auto"></div>
-    <p style="color:rgba(255,255,255,0.5);font-size:14px;letter-spacing:2px;margin-bottom:2rem">Professional-grade sneakers for those who demand performance and style.</p>
+
+  <!-- BLACK DIVIDER -->
+  <div style="background:#0d0d0d;padding:2.5rem 2rem;text-align:center">
+    <p style="color:rgba(255,255,255,0.5);font-size:14px;letter-spacing:2px;margin-bottom:1.5rem">Professional-grade sneakers for those who demand performance and style.</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
       <button class="btn-primary" onclick="document.getElementById('categories').scrollIntoView({behavior:'smooth'})">Shop Now</button>
       <button class="btn-outline" onclick="showPage('about',document.querySelectorAll('.nav-links a')[1])">Learn More</button>

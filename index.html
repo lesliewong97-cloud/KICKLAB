@@ -382,7 +382,7 @@ function openProduct(id, skipSkeleton=false){
   // Load real content after short delay
   setTimeout(()=>{
     document.getElementById('detailContent').innerHTML=`
-    <button class="back-btn" onclick="showPage('shop',document.querySelectorAll('.nav-links a')[0])">← Back to Shop</button>回Shop</button>
+    <button class="back-btn" onclick="showPage('shop',document.querySelectorAll('.nav-links a')[0])">← Back to Shop</button>
     <div class="detail-grid">
       <div class="detail-img-wrap"><img src="${p.img}" alt="${p.name}"></div>
       <div class="detail-info">

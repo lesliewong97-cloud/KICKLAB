@@ -743,6 +743,47 @@ function openProduct(id, skipHistory=false){
             :`<div style="font-size:13px;color:#888">${p.sizeNote||'Sizes coming soon'}</div>`}
         </div>
         <button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>
+        <details style="margin-top:1rem;border:1px solid #eee;border-radius:10px;overflow:hidden">
+          <summary style="padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;background:#f8f8f8">
+            <span>📦 What is a Half Box?</span>
+            <span style="font-size:11px;color:#aaa;font-weight:400">tap to see</span>
+          </summary>
+          <div style="padding:12px 16px;font-size:12px;color:#666;line-height:1.7;border-top:1px solid #eee">
+            Some shoes come with the box lid trimmed — a common practice for outlet or clearance stock. The shoes inside are <strong>brand new and unworn</strong>. Half box items are sold at <strong style="color:#f59e0b">RM10 off</strong>.
+          </div>
+          <div style="padding:0 12px 12px">
+            <svg width="100%" viewBox="0 0 680 360" role="img">
+              <title>Full box vs half box</title>
+              <desc>Full box has lid intact at original price. Half box has lid trimmed off at RM10 discount.</desc>
+              <text x="180" y="48" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="15" font-weight="600" fill="#1A1A2E">Full box</text>
+              <text x="180" y="66" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" fill="#888">Lid intact</text>
+              <rect x="72" y="82" width="216" height="50" rx="4" fill="#2d2d4e" stroke="#3d3d6e" stroke-width="0.5"/>
+              <rect x="80" y="128" width="200" height="10" rx="2" fill="#2d2d4e"/>
+              <rect x="80" y="136" width="200" height="110" rx="4" fill="#1A1A2E"/>
+              <rect x="80" y="168" width="200" height="28" fill="#E63946"/>
+              <text x="180" y="187" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#fff">KICKLAB</text>
+              <circle cx="180" cy="272" r="14" fill="#e8faf0" stroke="#25a244" stroke-width="0.5"/>
+              <text x="180" y="277" text-anchor="middle" font-size="14" fill="#25a244">✓</text>
+              <text x="180" y="300" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#25a244">Original price</text>
+              <line x1="340" y1="40" x2="340" y2="320" stroke="#eee" stroke-width="0.5" stroke-dasharray="4 4"/>
+              <text x="340" y="34" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#bbb">vs</text>
+              <text x="500" y="48" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="15" font-weight="600" fill="#1A1A2E">Half box</text>
+              <text x="500" y="66" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" fill="#888">Lid trimmed off</text>
+              <rect x="392" y="82" width="216" height="50" rx="4" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="5 3"/>
+              <text x="500" y="112" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#f59e0b">lid removed</text>
+              <text x="616" y="118" text-anchor="middle" font-size="15" fill="#f59e0b">✂</text>
+              <polyline points="400,136 418,124 438,134 458,122 478,133 498,121 518,133 538,122 558,133 578,123 600,134" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="400" y="134" width="200" height="112" rx="4" fill="#1A1A2E"/>
+              <rect x="400" y="168" width="200" height="28" fill="#E63946"/>
+              <text x="500" y="187" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#fff">KICKLAB</text>
+              <rect x="466" y="258" width="68" height="26" rx="13" fill="#fff8e1" stroke="#f59e0b" stroke-width="0.5"/>
+              <text x="500" y="275" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#b45309">- RM 10</text>
+              <text x="500" y="300" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#f59e0b">Discounted</text>
+              <rect x="60" y="320" width="560" height="28" rx="6" fill="#f8f8f8"/>
+              <text x="340" y="338" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#888">Shoes are brand new and unworn regardless of box condition</text>
+            </svg>
+          </div>
+        </details>
         <a class="detail-wa-btn" href="https://wa.me/60102347825?text=Hi%2C+I+would+like+to+enquire+about+${encodeURIComponent(p.name)}+(${p.sku})" target="_blank" style="text-decoration:none">💬 WhatsApp Us</a>
         <div class="detail-desc"><h4>Product Description</h4><p>${p.desc}</p></div>
       </div>

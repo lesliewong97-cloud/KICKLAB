@@ -247,6 +247,30 @@ a.logo span{color:#E63946}
   .cat-count{font-size:11px;display:none}
   .cat-body{padding:12px 14px}
 }
+
+/* SIZE CHART MODAL */
+.sizechart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
+.sizechart-overlay.open{display:flex}
+.sizechart-drawer{background:#fff;width:100%;max-width:600px;border-radius:16px 16px 0 0;padding:1.5rem;max-height:85vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sizechart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
+.sizechart-title{font-family:var(--font-head);font-size:22px;font-weight:700}
+.sizechart-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:1rem}
+.sizechart-table th{background:#1A1A2E;color:#fff;padding:10px 14px;text-align:center;font-size:11px;letter-spacing:1px;font-weight:600}
+.sizechart-table td{padding:10px 14px;text-align:center;border-bottom:1px solid #f0f0f0;color:#555}
+.sizechart-table tr.in-stock td{background:#f0f9f4;color:#1A1A2E;font-weight:600}
+.sizechart-table tr.in-stock td:first-child{color:#1A1A2E;border-left:3px solid #25a244}
+.sizechart-table tr.last-pair td{background:#fff5f5}
+.sizechart-table tr.last-pair td:first-child{border-left:3px solid #E63946}
+.sizechart-table tr.out-stock td{opacity:.4}
+.sizechart-stock-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.dot-available{background:#25a244}
+.dot-last{background:#E63946}
+.dot-out{background:#ccc}
+.sizechart-legend{display:flex;gap:16px;font-size:11px;color:#888;margin-bottom:1rem;flex-wrap:wrap}
+.sizechart-tip{background:#f8f8f8;border-radius:8px;padding:10px 14px;font-size:12px;color:#666;line-height:1.6;margin-top:.5rem}
+.sizechart-tip strong{color:#1A1A2E}
+.size-guide-link{background:none;border:none;font-size:12px;color:#888;cursor:pointer;font-family:var(--font-body);text-decoration:underline;padding:0;margin-top:.5rem;display:block}
 </style>
 </head>
 <body>
@@ -645,7 +669,31 @@ function openProduct(id, skipHistory=false){
     <style>
       @keyframes shimmer{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
       @media(max-width:768px){.detail-skel-grid{grid-template-columns:1fr!important}}
-    </style>
+    
+/* SIZE CHART MODAL */
+.sizechart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
+.sizechart-overlay.open{display:flex}
+.sizechart-drawer{background:#fff;width:100%;max-width:600px;border-radius:16px 16px 0 0;padding:1.5rem;max-height:85vh;overflow-y:auto;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sizechart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
+.sizechart-title{font-family:var(--font-head);font-size:22px;font-weight:700}
+.sizechart-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:1rem}
+.sizechart-table th{background:#1A1A2E;color:#fff;padding:10px 14px;text-align:center;font-size:11px;letter-spacing:1px;font-weight:600}
+.sizechart-table td{padding:10px 14px;text-align:center;border-bottom:1px solid #f0f0f0;color:#555}
+.sizechart-table tr.in-stock td{background:#f0f9f4;color:#1A1A2E;font-weight:600}
+.sizechart-table tr.in-stock td:first-child{color:#1A1A2E;border-left:3px solid #25a244}
+.sizechart-table tr.last-pair td{background:#fff5f5}
+.sizechart-table tr.last-pair td:first-child{border-left:3px solid #E63946}
+.sizechart-table tr.out-stock td{opacity:.4}
+.sizechart-stock-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.dot-available{background:#25a244}
+.dot-last{background:#E63946}
+.dot-out{background:#ccc}
+.sizechart-legend{display:flex;gap:16px;font-size:11px;color:#888;margin-bottom:1rem;flex-wrap:wrap}
+.sizechart-tip{background:#f8f8f8;border-radius:8px;padding:10px 14px;font-size:12px;color:#666;line-height:1.6;margin-top:.5rem}
+.sizechart-tip strong{color:#1A1A2E}
+.size-guide-link{background:none;border:none;font-size:12px;color:#888;cursor:pointer;font-family:var(--font-body);text-decoration:underline;padding:0;margin-top:.5rem;display:block}
+</style>
   `;
   document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
   document.getElementById('page-detail').classList.add('active');
@@ -667,7 +715,7 @@ function openProduct(id, skipHistory=false){
         <div class="detail-colorway">${p.colorway}</div>
         <div class="detail-price">RM ${p.price} <span>/ pairs</span></div>
         ${p.retail?`<div style="font-size:13px;color:#888;margin-top:-12px;margin-bottom:1.5rem">Retail: <span style="text-decoration:line-through">RM ${p.retail}</span> &nbsp;·&nbsp; <span style="color:#25a244;font-weight:600">Save RM ${p.retail-p.price} (${Math.round((p.retail-p.price)/p.retail*100)}% off)</span></div>`:''}
-        <div class="size-label">Select Size (UK)</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><div style="font-size:12px;font-weight:600;letter-spacing:.5px">Select Size (UK)</div><button class="size-guide-link" onclick="openSizeChart(${p.id})">📏 Size Guide</button></div>
         <div class="sizes">
           ${p.sizes&&p.sizes.length>0
             ?p.sizes.map(s=>`<button class="size-btn${s.stock===0?' disabled':''}" onclick="${s.stock>0?`selectSize(this,'${s.uk}')`:''}">${s.uk}<br><span style="font-size:10px;color:${s.stock===1?'#E63946':s.stock<=2?'#f59e0b':'#aaa'}">${s.stock===0?'Sold Out':s.stock===1?'Last 1 pair':s.stock+'pairs'}</span></button>`).join('')
@@ -1083,6 +1131,58 @@ function toggleNav(){
 
 if('scrollRestoration' in history)history.scrollRestoration='manual';
 
+
+const sizeData=[
+  {uk:'UK 5',  us:'US 6',   eu:'EU 38',   cm:'24.0'},
+  {uk:'UK 5.5',us:'US 6.5', eu:'EU 38.5', cm:'24.5'},
+  {uk:'UK 6',  us:'US 7',   eu:'EU 39',   cm:'25.0'},
+  {uk:'UK 6.5',us:'US 7.5', eu:'EU 40',   cm:'25.5'},
+  {uk:'UK 7',  us:'US 8',   eu:'EU 40.5', cm:'26.0'},
+  {uk:'UK 7.5',us:'US 8.5', eu:'EU 41',   cm:'26.5'},
+  {uk:'UK 8',  us:'US 9',   eu:'EU 42',   cm:'27.0'},
+  {uk:'UK 8.5',us:'US 9.5', eu:'EU 43',   cm:'27.5'},
+  {uk:'UK 9',  us:'US 10',  eu:'EU 44',   cm:'28.0'},
+  {uk:'UK 9.5',us:'US 10.5',eu:'EU 44.5', cm:'28.5'},
+  {uk:'UK 10', us:'US 11',  eu:'EU 45',   cm:'29.0'},
+  {uk:'UK 11', us:'US 12',  eu:'EU 46',   cm:'30.0'},
+  {uk:'UK 12', us:'US 13',  eu:'EU 47.5', cm:'31.0'},
+];
+
+const sizeTips={
+  'NIKE':'Nike generally fits true to size. If you are between sizes, we recommend going half size up.',
+  'JORDAN':'Air Jordan 1 & 3 tend to run half size large. Consider going half size down for a snug fit.',
+  'CONVERSE':'Converse runs large. We recommend going 1 to 1.5 sizes down from your usual size.',
+  'NEW BALANCE':'New Balance fits true to size. Wide-footed customers may want to go half size up.',
+};
+
+function openSizeChart(productId){
+  const p=products.find(x=>x.id===productId);
+  if(!p) return;
+  const tbody=document.getElementById('sizeChartBody');
+  const tip=document.getElementById('sizeChartTip');
+  
+  tbody.innerHTML=sizeData.map(row=>{
+    const sizeInfo=p.sizes?p.sizes.find(s=>s.uk===row.uk):null;
+    const stock=sizeInfo?sizeInfo.stock:0;
+    let rowClass='out-stock';
+    let stockLabel='<span class="sizechart-stock-dot dot-out"></span>Sold out';
+    if(stock===1){rowClass='last-pair';stockLabel='<span class="sizechart-stock-dot dot-last"></span>Last pair';}
+    else if(stock>1){rowClass='in-stock';stockLabel='<span class="sizechart-stock-dot dot-available"></span>'+stock+' pairs';}
+    return '<tr class="'+rowClass+'"><td>'+row.uk+'</td><td>'+row.us+'</td><td>'+row.eu+'</td><td>'+row.cm+' cm</td><td>'+stockLabel+'</td></tr>';
+  }).join('');
+
+  const brandTip=sizeTips[p.brand]||'Refer to CM measurement for most accurate sizing.';
+  tip.innerHTML='<strong>Fit Tip · '+p.brand+'</strong><br>'+brandTip;
+
+  document.getElementById('sizeChartOverlay').classList.add('open');
+}
+
+function closeSizeChart(e){
+  if(e.target===document.getElementById('sizeChartOverlay')){
+    document.getElementById('sizeChartOverlay').classList.remove('open');
+  }
+}
+
 async function loadInventory(){
   try{
     const res=await fetch('/api/get-inventory');
@@ -1121,5 +1221,35 @@ if(_params.get('payment')==='success'){
 
 loadInventory();
 </script>
+
+<!-- SIZE CHART MODAL -->
+<div class="sizechart-overlay" id="sizeChartOverlay" onclick="closeSizeChart(event)">
+  <div class="sizechart-drawer">
+    <div class="sizechart-header">
+      <div class="sizechart-title">📏 Size Guide</div>
+      <button class="close-btn" onclick="document.getElementById('sizeChartOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="sizechart-legend">
+      <span><span class="sizechart-stock-dot dot-available"></span>Available</span>
+      <span><span class="sizechart-stock-dot dot-last"></span>Last pair</span>
+      <span><span class="sizechart-stock-dot dot-out"></span>Sold out</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="sizechart-table" id="sizeChartTable">
+        <thead>
+          <tr>
+            <th>UK</th>
+            <th>US (M)</th>
+            <th>EU</th>
+            <th>CM</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody id="sizeChartBody"></tbody>
+      </table>
+    </div>
+    <div class="sizechart-tip" id="sizeChartTip"></div>
+  </div>
+</div>
 </body>
 </html>

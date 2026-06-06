@@ -723,7 +723,7 @@ function openProduct(id, skipHistory=false){
         <div class="detail-colorway">${p.colorway}</div>
         <div class="detail-price" id="detailPriceDisplay">RM ${p.price} <span>/ pairs</span></div>
         ${p.retail?`<div style="font-size:13px;color:#888;margin-top:-12px;margin-bottom:1.5rem">Retail: <span style="text-decoration:line-through">RM ${p.retail}</span> &nbsp;·&nbsp; <span style="color:#25a244;font-weight:600">Save RM ${p.retail-p.price} (${Math.round((p.retail-p.price)/p.retail*100)}% off)</span></div>`:''}
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><div style="font-size:12px;font-weight:600;letter-spacing:.5px">Select Size (UK)</div><div style="display:flex;gap:12px"><button class="size-guide-link" onclick="openSizeChart(${p.id})">📏 Size Guide</button><button class="size-guide-link" style="color:#f59e0b" onclick="document.getElementById('boxExplainer').open=!document.getElementById('boxExplainer').open">📦 Half Box?</button></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><div style="font-size:12px;font-weight:600;letter-spacing:.5px">Select Size (UK)</div><button class="size-guide-link" onclick="openSizeChart(${p.id})">📏 Size Guide</button></div>
         <details id="boxExplainer" style="margin-bottom:1rem;border:1px solid #eee;border-radius:10px;overflow:hidden">
           <summary style="padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;background:#f8f8f8">
             <span>📦 What is a Half Box?</span>
@@ -765,22 +765,44 @@ function openProduct(id, skipHistory=false){
           </div>
         </details>
         <div class="sizes">
-          ${p.sizes&&p.sizes.length>0
-            ?p.sizes.map(s=>{
-              const isHalf=s.box==='half';
-              const dispPrice=isHalf?p.price-10:p.price;
-              const boxLabel=isHalf?'Half box':'Full box';
-              const boxColor=isHalf?'#f59e0b':'#25a244';
+          ${p.sizes&&p.sizes.length>0?(()=>{
+            const fullSizes=p.sizes.filter(s=>s.box==='full');
+            const halfSizes=p.sizes.filter(s=>s.box==='half');
+            const fullPrice=p.price;
+            const halfPrice=p.price-10;
+            const makeBtn=(s,box,price)=>{
               const stockColor=s.stock===1?'#E63946':s.stock===2?'#f59e0b':'transparent';
               const stockLabel=s.stock===0?'Sold Out':s.stock===1?'🔴 Last pair':s.stock===2?'⚡ Only 2 left':'';
               const stockHtml=stockLabel?'<span style="font-size:9px;color:'+stockColor+';font-weight:500">'+stockLabel+'</span>':'<span style="font-size:9px;color:transparent">·</span>';
-              return '<button class="size-btn'+(s.stock===0?' disabled':'')+'" onclick="'+(s.stock>0?'selectSize(this,\''+s.uk+'\',\''+s.box+'\','+dispPrice+')':'')+'">'
+              return '<button class="size-btn'+(s.stock===0?' disabled':'')+'" onclick="'+(s.stock>0?'selectSize(this,\''+s.uk+'\',\''+box+'\','+price+')':'')+'">'
                 +'<span style="font-size:13px;font-weight:700;color:inherit">'+s.uk+'</span>'
-                +'<span style="font-size:9px;font-weight:700;color:'+boxColor+'">'+boxLabel+'</span>'
                 +stockHtml
                 +'</button>';
-            }).join('')
-            :`<div style="font-size:13px;color:#888">${p.sizeNote||'Sizes coming soon'}</div>`}
+            };
+            let html='';
+            if(fullSizes.length){
+              html+='<div style="margin-bottom:1rem">';
+              html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+              html+='<span style="font-size:11px;font-weight:700;color:#25a244;letter-spacing:.5px">● FULL BOX</span>';
+              html+='<span style="font-family:var(--font-head);font-size:18px;font-weight:700;color:#1A1A2E">RM '+fullPrice+'</span>';
+              html+='</div>';
+              html+='<div style="display:flex;flex-wrap:wrap;gap:8px">'+fullSizes.map(s=>makeBtn(s,'full',fullPrice)).join('')+'</div>';
+              html+='</div>';
+            }
+            if(halfSizes.length){
+              html+='<div style="margin-bottom:.5rem">';
+              html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+              html+='<div style="display:flex;align-items:center;gap:8px">';
+              html+='<span style="font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:.5px">● HALF BOX</span>';
+              html+='<button onclick="document.getElementById(\'boxExplainer\').open=!document.getElementById(\'boxExplainer\').open" style="background:none;border:none;font-size:11px;color:#aaa;cursor:pointer;text-decoration:underline;padding:0;font-family:var(--font-body)">What is this?</button>';
+              html+='</div>';
+              html+='<span style="font-family:var(--font-head);font-size:18px;font-weight:700;color:#1A1A2E">RM '+halfPrice+'</span>';
+              html+='</div>';
+              html+='<div style="display:flex;flex-wrap:wrap;gap:8px">'+halfSizes.map(s=>makeBtn(s,'half',halfPrice)).join('')+'</div>';
+              html+='</div>';
+            }
+            return html;
+          })():`<div style="font-size:13px;color:#888">${p.sizeNote||'Sizes coming soon'}</div>`}
         </div>
 <button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>
         <a class="detail-wa-btn" href="https://wa.me/60102347825?text=Hi%2C+I+would+like+to+enquire+about+${encodeURIComponent(p.name)}+(${p.sku})" target="_blank" style="text-decoration:none">💬 WhatsApp Us</a>

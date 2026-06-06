@@ -790,7 +790,7 @@ function showPage(name, link, restoreScroll=false){
   document.getElementById('navLinks').classList.remove('open');
   if(restoreScroll && name==='shop'){
     const savedPos=parseInt(sessionStorage.getItem('scrollPos')||'0');
-    requestAnimationFrame(()=>window.scrollTo(0, savedPos));
+    requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0, savedPos)));
   } else {
     window.scrollTo(0,0);
   }
@@ -821,7 +821,7 @@ window.addEventListener('popstate',function(e){
     if(idx[page]!==undefined) document.querySelectorAll('.nav-links a')[idx[page]].classList.add('active');
     if(page==='shop'){
       const savedPos=parseInt(sessionStorage.getItem('scrollPos')||'0');
-      requestAnimationFrame(()=>window.scrollTo(0, savedPos));
+      requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0, savedPos)));
     } else {
       window.scrollTo(0,0);
     }

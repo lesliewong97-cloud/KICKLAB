@@ -198,7 +198,7 @@ a.logo span{color:#E63946}
 .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:.5rem}
 .cat-card{background:#fff;border:1px solid #eee;border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative}
 .cat-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,0.1)}
-.cat-img{height:200px;display:flex;align-items:center;justify-content:center;font-size:64px;position:relative}
+.cat-img{height:200px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
 .cat-img-sneakers{background:linear-gradient(135deg,#1A1A2E,#2d2d4e)}
 .cat-img-running{background:linear-gradient(135deg,#E63946,#c0303b)}
 .cat-img-tennis{background:linear-gradient(135deg,#25a244,#1d7a33)}
@@ -390,11 +390,11 @@ const products=[
 ];
 
 const categories=[
-  {id:'sneakers',name:'Sneakers',emoji:'👟',style:'sneakers',desc:'Lifestyle & Street Kicks'},
-  {id:'running',name:'Running',emoji:'🏃',style:'running',desc:'Performance Running Shoes'},
-  {id:'tennis',name:'Pickleball / Tennis',emoji:'🎾',style:'tennis',desc:'Court Performance Footwear'},
-  {id:'apparels',name:'Apparels',emoji:'👕',style:'apparels',desc:'Tops, Bottoms & More'},
-  {id:'accessories',name:'Accessories',emoji:'🎒',style:'accessories',desc:'Bags, Socks & Gear'},
+  {id:'sneakers',name:'Sneakers',bg:'IB2263-100.jpeg',desc:'Lifestyle & Street Kicks'},
+  {id:'running',name:'Running',bg:'',desc:'Performance Running Shoes'},
+  {id:'tennis',name:'Pickleball / Tennis',bg:'COURT_KHAKI.jpeg',desc:'Court Performance Footwear'},
+  {id:'apparels',name:'Apparels',bg:'',desc:'Tops, Bottoms & More'},
+  {id:'accessories',name:'Accessories',bg:'',desc:'Bags, Socks & Gear'},
 ];
 
 let cart=[];
@@ -465,11 +465,16 @@ function renderCategories(){
   if(!grid) return;
   grid.innerHTML=categories.map(c=>{
     const count=products.filter(p=>p.cat===c.id).length;
+    const bgStyle=c.bg
+      ?`background-image:url('${c.bg}');background-size:cover;background-position:center`
+      :`background:#1A1A2E`;
     return `
       <div class="cat-card" onclick="openCategory('${c.id}')">
-        <div class="cat-img cat-img-${c.style}">
-          <span>${c.emoji}</span>
-          ${count>0?`<span class="cat-badge">${count} items</span>`:'<span class="cat-badge" style="background:#aaa">Coming Soon</span>'}
+        <div class="cat-img" style="${bgStyle}">
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);border-radius:0"></div>
+          ${count>0
+            ?`<span class="cat-badge">${count} items</span>`
+            :`<span class="cat-badge" style="background:rgba(255,255,255,0.25);color:#fff">Coming Soon</span>`}
         </div>
         <div class="cat-body">
           <div>

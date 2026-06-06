@@ -209,6 +209,12 @@ a.logo span{color:#E63946}
 .cat-count{font-size:12px;color:#aaa;margin-top:2px}
 .cat-arrow{font-size:18px;color:#ccc;flex-shrink:0}
 .cat-badge{position:absolute;top:12px;right:12px;background:#E63946;color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px}
+.size-filter-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:1.5rem}
+.size-filter-btn{min-width:72px;height:52px;border:1.5px solid #ddd;border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#1A1A2E}
+.size-filter-btn:hover{border-color:#1A1A2E;background:#f8f8f8}
+.size-filter-btn.active{background:#1A1A2E;color:#fff;border-color:#1A1A2E}
+.size-filter-btn .size-count{font-size:10px;font-weight:400;opacity:.7}
+.size-results{margin-top:1.5rem}
 
 @media(max-width:768px){.success-wrap{padding:1.5rem}}
 @media(max-width:768px){
@@ -289,6 +295,13 @@ a.logo span{color:#E63946}
   <div class="section" id="categories">
     <div class="section-title">Shop by Category</div>
     <div class="cat-grid" id="categoryGrid"></div>
+  </div>
+  </div>
+
+  <div class="section" id="shopBySize">
+    <div class="section-title">Shop by Size</div>
+    <div style="font-size:13px;color:#888;margin-bottom:1.25rem">Select your size to see all available shoes</div>
+    <div class="size-filter-grid" id="sizeFilterGrid"></div>
   </div>
 </div>
 
@@ -537,8 +550,77 @@ function openCategory(catId, skipHistory=false){
 
 function renderProducts(){
   renderCategories();
+  renderSizeFilter();
 }
 
+function renderSizeFilter(){
+  const grid = document.getElementById('sizeFilterGrid');
+  if(!grid) return;
+
+  // Collect all sizes that have stock > 0
+  const sizeMap = {};
+  products.forEach(p => {
+    if(!p.sizes) return;
+    p.sizes.forEach(s => {
+      if(s.stock > 0){
+        if(!sizeMap[s.uk]) sizeMap[s.uk] = 0;
+        sizeMap[s.uk]++;
+      }
+    });
+  });
+
+  // Sort sizes numerically
+  const sorted = Object.keys(sizeMap).sort((a,b) => {
+    const na = parseFloat(a.replace('UK ',''));
+    const nb = parseFloat(b.replace('UK ',''));
+    return na - nb;
+  });
+
+  grid.innerHTML = sorted.map(size => `
+    <button class="size-filter-btn" onclick="filterBySize('${size}', this)">
+      ${size}
+      <span class="size-count">${sizeMap[size]} style${sizeMap[size]>1?'s':''}</span>
+    </button>
+  `).join('');
+
+  // Add results container if not exists
+  const section = document.getElementById('shopBySize');
+  if(!document.getElementById('sizeResults')){
+    const div = document.createElement('div');
+    div.id = 'sizeResults';
+    div.className = 'size-results';
+    section.appendChild(div);
+  }
+}
+
+function filterBySize(size, btn){
+  document.querySelectorAll('.size-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const matching=products.filter(p=>p.sizes&&p.sizes.some(s=>s.uk===size&&s.stock>0));
+  const resultsEl=document.getElementById('sizeResults');
+  if(!resultsEl) return;
+  let html='<div style="font-size:13px;color:#888;margin-bottom:1rem">'+matching.length+' style'+(matching.length!==1?'s':'')+' available in '+size+'</div><div class="products">';
+  matching.forEach(p=>{
+    const sizeInfo=p.sizes.find(s=>s.uk===size);
+    const stockLabel=sizeInfo.stock===1?'Last pair':sizeInfo.stock+' left';
+    const stockColor=sizeInfo.stock===1?'#E63946':'#888';
+    html+='<a class="card" href="/#'+p.slug+'" onclick="event.preventDefault();openProduct('+p.id+')">';
+    html+='<div class="card-img">';
+    if(p.badge) html+='<span class="badge badge-'+(p.badge==='new'?'new':'hot')+'">'+(p.badge==='new'?'NEW':'🔥 HOT')+'</span>';
+    html+='<img src="'+p.img+'" alt="'+p.name+'" onerror="this.style.display='none'">';
+    html+='</div><div class="card-body">';
+    html+='<div class="card-brand">'+p.brand+'</div>';
+    html+='<div class="card-name">'+p.name+'</div>';
+    html+='<div class="card-footer"><div>';
+    if(p.retail) html+='<div style="font-size:11px;color:#aaa;text-decoration:line-through">RM '+p.retail+'</div>';
+    html+='<div class="price">RM '+p.price+'</div></div>';
+    html+='<span style="font-size:10px;font-weight:600;color:'+stockColor+'">'+stockLabel+'</span>';
+    html+='</div></div></a>';
+  });
+  html+='</div>';
+  resultsEl.innerHTML=html;
+  resultsEl.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function openProduct(id, skipHistory=false){
   const p=products.find(x=>x.id===id);
   selectedSize=null;

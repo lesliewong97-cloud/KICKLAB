@@ -649,7 +649,11 @@ function filterBySize(size, btn){
 function openProduct(id, skipHistory=false){
   const p=products.find(x=>x.id===id);
   selectedSize=null;
+  selectedBox=null;
+  selectedPrice=null;
   currentProductId=id;
+  // Save current scroll position before navigating
+  sessionStorage.setItem('scrollPos', window.scrollY);
 
   document.getElementById('detailContent').innerHTML=`
     <div style="padding:0">
@@ -744,13 +748,18 @@ function openProduct(id, skipHistory=false){
   },600);
 }
 
-function showPage(name, link){
+function showPage(name, link, restoreScroll=false){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
   if(link) link.classList.add('active');
-  window.scrollTo(0,0);
   document.getElementById('navLinks').classList.remove('open');
+  if(restoreScroll && name==='shop'){
+    const savedPos=parseInt(sessionStorage.getItem('scrollPos')||'0');
+    requestAnimationFrame(()=>window.scrollTo(0, savedPos));
+  } else {
+    window.scrollTo(0,0);
+  }
   const p=products.find(x=>x.id===currentProductId);
   const url=name==='shop'?'/':name==='detail'?`/#${p?p.slug:'product'}`:`/#${name}`;
   if(name==='shop'){
@@ -776,7 +785,12 @@ window.addEventListener('popstate',function(e){
     document.getElementById('page-'+(page==='shop'?'shop':page)).classList.add('active');
     document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
     if(idx[page]!==undefined) document.querySelectorAll('.nav-links a')[idx[page]].classList.add('active');
-    window.scrollTo(0,0);
+    if(page==='shop'){
+      const savedPos=parseInt(sessionStorage.getItem('scrollPos')||'0');
+      requestAnimationFrame(()=>window.scrollTo(0, savedPos));
+    } else {
+      window.scrollTo(0,0);
+    }
   }
 });
 

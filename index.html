@@ -791,12 +791,12 @@ function openProduct(id, skipHistory=false){
             }
             if(halfSizes.length){
               html+='<div style="margin-bottom:.5rem">';
-              html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
-              html+='<div style="display:flex;align-items:center;gap:8px">';
+              html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
               html+='<span style="font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:.5px">● HALF BOX</span>';
-              html+='<button onclick="document.getElementById(\'boxExplainer\').open=!document.getElementById(\'boxExplainer\').open" style="background:none;border:none;font-size:11px;color:#aaa;cursor:pointer;text-decoration:underline;padding:0;font-family:var(--font-body)">What is this?</button>';
+              html+='<span style="font-family:var(--font-head);font-size:16px;font-weight:700;color:#1A1A2E">RM '+halfPrice+'</span>';
               html+='</div>';
-              html+='<span style="font-family:var(--font-head);font-size:18px;font-weight:700;color:#1A1A2E">RM '+halfPrice+'</span>';
+              html+='<div style="margin-bottom:8px">';
+              html+='<button onclick="document.getElementById(\'boxExplainer\').open=!document.getElementById(\'boxExplainer\').open" style="background:none;border:none;font-size:11px;color:#aaa;cursor:pointer;text-decoration:underline;padding:0;font-family:var(--font-body)">📦 What is a half box?</button>';
               html+='</div>';
               html+='<div style="display:flex;flex-wrap:wrap;gap:8px">'+halfSizes.map(s=>makeBtn(s,'half',halfPrice)).join('')+'</div>';
               html+='</div>';

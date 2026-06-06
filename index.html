@@ -538,6 +538,7 @@ function renderCategories(){
 }
 
 function openCategory(catId, skipHistory=false){
+  if(!skipHistory) sessionStorage.setItem('scrollPos', window.scrollY);
   const cat=categories.find(c=>c.id===catId);
   const list=products.filter(p=>p.cat===catId);
 
@@ -660,8 +661,10 @@ function openProduct(id, skipHistory=false){
   selectedBox=null;
   selectedPrice=null;
   currentProductId=id;
-  // Save current scroll position before navigating
-  sessionStorage.setItem('scrollPos', window.scrollY);
+  // Save scroll position only when leaving shop page (not category)
+  if(document.getElementById('page-shop').classList.contains('active')){
+    sessionStorage.setItem('scrollPos', window.scrollY);
+  }
 
   document.getElementById('detailContent').innerHTML=`
     <div style="padding:0">

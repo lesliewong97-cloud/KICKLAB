@@ -465,16 +465,22 @@ function renderCategories(){
   if(!grid) return;
   grid.innerHTML=categories.map(c=>{
     const count=products.filter(p=>p.cat===c.id).length;
-    const bgStyle=c.bg
-      ?`background-image:url('${c.bg}');background-size:cover;background-position:center`
-      :`background:#1A1A2E`;
+    const catProducts=products.filter(p=>p.cat===c.id).slice(0,3);
     return `
       <div class="cat-card" onclick="openCategory('${c.id}')">
-        <div class="cat-img" style="${bgStyle}">
-          <div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);border-radius:0"></div>
+        <div class="cat-img" style="background:#f7f7f7;gap:4px;padding:12px">
           ${count>0
-            ?`<span class="cat-badge">${count} items</span>`
-            :`<span class="cat-badge" style="background:rgba(255,255,255,0.25);color:#fff">Coming Soon</span>`}
+            ?catProducts.map(p=>`
+              <div style="flex:1;height:100%;background:#fff;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center">
+                <img src="${p.img}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;padding:8px">
+              </div>
+            `).join('')
+            :`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;color:#bbb">
+                <div style="font-size:36px;margin-bottom:8px">🔜</div>
+                <div style="font-size:12px;font-weight:600;letter-spacing:1px">COMING SOON</div>
+              </div>`
+          }
+          ${count>0?`<span class="cat-badge">${count} items</span>`:''}
         </div>
         <div class="cat-body">
           <div>

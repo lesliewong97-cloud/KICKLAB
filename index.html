@@ -391,10 +391,10 @@ const products=[
 
 const categories=[
   {id:'sneakers',name:'Sneakers',bg:'cat-sneakers.jpg',desc:'Lifestyle & Street Kicks'},
-  {id:'running',name:'Running',bg:'cat-running.jpg',desc:'Performance Running Shoes'},
+  {id:'running',name:'Running',bg:'cat-running.jpg',desc:'Performance Running Shoes',bgPos:'center bottom'},
   {id:'tennis',name:'Pickleball / Tennis',bg:'cat-tennis.jpg',desc:'Court Performance Footwear'},
   {id:'apparels',name:'Apparels',bg:'cat-apparels.jpg',desc:'Tops, Bottoms & More'},
-  {id:'accessories',name:'Accessories',bg:'cat-accessories.jpg',desc:'Bags, Socks & Gear'},
+  {id:'accessories',name:'Accessories',bg:'cat-accessories.jpg',desc:'Bags, Socks & Gear',bgPos:'center bottom'},
 ];
 
 let cart=[];
@@ -465,7 +465,7 @@ function renderCategories(){
   grid.innerHTML=categories.map(c=>{
     const count=products.filter(p=>p.cat===c.id).length;
     const bgStyle=c.bg
-      ?`background-image:url('${c.bg}');background-size:cover;background-position:center`
+      ?`background-image:url('${c.bg}');background-size:cover;background-position:${c.bgPos||'center'}`
       :`background:#1A1A2E`;
     return `
       <div class="cat-card" onclick="openCategory('${c.id}')">

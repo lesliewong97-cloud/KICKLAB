@@ -742,7 +742,7 @@ function openProduct(id, skipHistory=false){
             }).join('')
             :`<div style="font-size:13px;color:#888">${p.sizeNote||'Sizes coming soon'}</div>`}
         </div>
-        <button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>
+
         <details style="margin-top:1rem;border:1px solid #eee;border-radius:10px;overflow:hidden">
           <summary style="padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;background:#f8f8f8">
             <span>📦 What is a Half Box?</span>
@@ -784,6 +784,7 @@ function openProduct(id, skipHistory=false){
             </svg>
           </div>
         </details>
+        <button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>
         <a class="detail-wa-btn" href="https://wa.me/60102347825?text=Hi%2C+I+would+like+to+enquire+about+${encodeURIComponent(p.name)}+(${p.sku})" target="_blank" style="text-decoration:none">💬 WhatsApp Us</a>
         <div class="detail-desc"><h4>Product Description</h4><p>${p.desc}</p></div>
       </div>

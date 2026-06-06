@@ -218,6 +218,21 @@ a.logo span{color:#E63946}
 .size-filter-btn .size-count{font-size:10px;font-weight:400;opacity:.7}
 .size-results{margin-top:1.5rem}
 
+/* SEARCH */
+.search-icon-btn{background:none;border:none;color:rgba(255,255,255,0.75);font-size:18px;cursor:pointer;padding:4px 8px;display:flex;align-items:center;transition:color .2s}
+.search-icon-btn:hover{color:#fff}
+.search-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;justify-content:center;align-items:flex-start;padding-top:80px;padding:80px 1rem 0}
+.search-overlay.open{display:flex}
+.search-box{width:100%;max-width:700px}
+.search-header{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:6px 6px 6px 20px;box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+.search-input{flex:1;border:none;outline:none;font-size:16px;font-family:var(--font-body);color:#1A1A2E;background:transparent}
+.search-input::placeholder{color:#bbb}
+.search-close-btn{background:#f0f0f0;border:none;width:40px;height:40px;border-radius:8px;font-size:18px;cursor:pointer;color:#666;flex-shrink:0;font-family:var(--font-body)}
+.search-close-btn:hover{background:#e0e0e0}
+.search-results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px;max-height:62vh;overflow-y:auto;padding-bottom:1rem}
+.search-empty{text-align:center;color:#aaa;padding:2rem;background:#fff;border-radius:12px;margin-top:16px;font-size:14px}
+@media(max-width:768px){.search-results-grid{grid-template-columns:repeat(2,1fr)}}
+
 @media(max-width:768px){.success-wrap{padding:1.5rem}}
 @media(max-width:768px){
   nav{padding:0 1rem;position:relative}
@@ -285,10 +300,25 @@ a.logo span{color:#E63946}
     <li><a href="/#contact" onclick="event.preventDefault();showPage('contact',this)">Contact</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:8px">
+    <button class="search-icon-btn" onclick="openSearch()" title="Search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
     <button class="cart-btn" onclick="openCart()">🛍 Cart <span class="cart-count" id="cartCount">0</span></button>
     <button class="burger-btn" onclick="toggleNav()">☰</button>
   </div>
 </nav>
+
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay" onclick="closeSearchOnBg(event)">
+  <div class="search-box">
+    <div class="search-header">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search by name, brand, or SKU..." oninput="doSearch(this.value)">
+      <button class="search-close-btn" onclick="closeSearch()">✕</button>
+    </div>
+    <div id="searchResults"></div>
+  </div>
+</div>
 
 <!-- SHOP PAGE -->
 <div class="page active" id="page-shop">
@@ -1308,6 +1338,54 @@ if(_params.get('payment')==='success'){
 }
 
 loadInventory();
+
+function openSearch(){
+  document.getElementById('searchOverlay').classList.add('open');
+  document.getElementById('searchInput').value='';
+  document.getElementById('searchResults').innerHTML='';
+  setTimeout(()=>document.getElementById('searchInput').focus(),50);
+}
+function closeSearch(){
+  document.getElementById('searchOverlay').classList.remove('open');
+}
+function closeSearchOnBg(e){
+  if(e.target===document.getElementById('searchOverlay')) closeSearch();
+}
+function doSearch(q){
+  const results=document.getElementById('searchResults');
+  const query=q.trim().toLowerCase();
+  if(!query){results.innerHTML='';return;}
+  const matches=products.filter(p=>
+    p.name.toLowerCase().includes(query)||
+    p.brand.toLowerCase().includes(query)||
+    p.sku.toLowerCase().includes(query)||
+    (p.colorway&&p.colorway.toLowerCase().includes(query))
+  );
+  if(!matches.length){
+    results.innerHTML=`<div class="search-empty">No results for "${q}"</div>`;
+    return;
+  }
+  results.innerHTML=`<div class="search-results-grid">${matches.map(p=>`
+    <a class="card" href="/#${p.slug}" onclick="event.preventDefault();closeSearch();openProduct(${p.id})">
+      <div class="card-img">
+        ${p.badge?`<span class="badge badge-${p.badge==='new'?'new':'hot'}">${p.badge==='new'?'NEW':'🔥 HOT'}</span>`:''}
+        <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
+      </div>
+      <div class="card-body">
+        <div class="card-brand">${p.brand}</div>
+        <div class="card-name">${p.name}</div>
+        <div class="card-footer">
+          <div>
+            ${p.retail?`<div style="font-size:11px;color:#aaa;text-decoration:line-through">RM ${p.retail}</div>`:''}
+            <div class="price">RM ${p.price}</div>
+          </div>
+          <button class="add-btn" onclick="event.stopPropagation();quickAdd(${p.id},this)">+</button>
+        </div>
+      </div>
+    </a>
+  `).join('')}</div>`;
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSearch();});
 </script>
 
 <!-- SIZE CHART MODAL -->

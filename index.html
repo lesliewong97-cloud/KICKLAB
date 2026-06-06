@@ -73,7 +73,7 @@ a.logo span{color:#E63946}
 .detail-price{font-family:var(--font-head);font-size:42px;font-weight:700;color:#E63946;margin-bottom:1.5rem;display:flex;align-items:baseline;gap:8px}
 .detail-price span{font-size:16px;font-family:var(--font-body);font-weight:400;color:#aaa}
 .size-label{font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:.75rem}
-.sizes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.5rem}
+.sizes{display:block;margin-bottom:1.5rem}
 .size-btn{min-width:72px;height:64px;border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .2s;padding:0 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .size-btn:hover{border-color:#1A1A2E}
 .size-btn.selected{background:#1A1A2E;color:#fff;border-color:#1A1A2E;box-shadow:0 4px 12px rgba(26,26,46,0.25)}
@@ -764,7 +764,7 @@ function openProduct(id, skipHistory=false){
             </svg>
           </div>
         </details>
-        <div class="sizes">
+        <div class="sizes" style="display:block">
           ${p.sizes&&p.sizes.length>0?(()=>{
             const fullSizes=p.sizes.filter(s=>s.box==='full');
             const halfSizes=p.sizes.filter(s=>s.box==='half');
@@ -781,14 +781,14 @@ function openProduct(id, skipHistory=false){
             };
             let html='';
             if(fullSizes.length){
-              html+='<div style="margin-bottom:1.25rem">';
+              html+='<div style="display:block;width:100%;margin-bottom:1.25rem">';
               html+='<div style="font-size:11px;font-weight:700;color:#25a244;letter-spacing:.5px;margin-bottom:10px">● FULL BOX</div>';
               html+='<div style="display:flex;flex-wrap:wrap;gap:8px">'+fullSizes.map(s=>makeBtn(s,'full',fullPrice)).join('')+'</div>';
               html+='</div>';
             }
             if(halfSizes.length){
-              if(fullSizes.length) html+='<div style="border-top:1.5px solid #f0f0f0;margin-bottom:1.25rem"></div>';
-              html+='<div>';
+              if(fullSizes.length) html+='<div style="display:block;width:100%;border-top:1.5px solid #f0f0f0;margin-bottom:1.25rem"></div>';
+              html+='<div style="display:block;width:100%">';
               html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
               html+='<span style="font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:.5px">● HALF BOX</span>';
               html+='<button onclick="document.getElementById(\'boxExplainer\').open=!document.getElementById(\'boxExplainer\').open" style="background:none;border:none;font-size:11px;color:#aaa;cursor:pointer;text-decoration:underline;padding:0;font-family:var(--font-body)">📦 What is this?</button>';

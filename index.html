@@ -1214,7 +1214,19 @@ async function loadInventory(){
     const inventory=await res.json();
     products.forEach(p=>{
       if(inventory[p.sku]){
-        p.sizes=Object.entries(inventory[p.sku]).map(([size,stock])=>({uk:size,stock}));
+        // New format: { "UK 8": { full: 6, half: 2 } }
+        const sizes=[];
+        Object.entries(inventory[p.sku]).forEach(([size,boxData])=>{
+          if(boxData.full>0) sizes.push({uk:size,stock:boxData.full,box:'full'});
+          if(boxData.half>0) sizes.push({uk:size,stock:boxData.half,box:'half'});
+        });
+        // Sort by size numerically
+        sizes.sort((a,b)=>{
+          const na=parseFloat(a.uk.replace('UK ',''));
+          const nb=parseFloat(b.uk.replace('UK ',''));
+          return na===nb?(a.box==='full'?-1:1):na-nb;
+        });
+        p.sizes=sizes;
       }
     });
   }catch(e){

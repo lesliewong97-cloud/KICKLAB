@@ -296,7 +296,6 @@ a.logo span{color:#E63946}
     <div class="section-title">Shop by Category</div>
     <div class="cat-grid" id="categoryGrid"></div>
   </div>
-  </div>
 
   <div class="section" id="shopBySize">
     <div class="section-title">Shop by Size</div>
@@ -607,7 +606,7 @@ function filterBySize(size, btn){
     html+='<a class="card" href="/#'+p.slug+'" onclick="event.preventDefault();openProduct('+p.id+')">';
     html+='<div class="card-img">';
     if(p.badge) html+='<span class="badge badge-'+(p.badge==='new'?'new':'hot')+'">'+(p.badge==='new'?'NEW':'🔥 HOT')+'</span>';
-    html+='<img src="'+p.img+'" alt="'+p.name+'" onerror="this.style.display='none'">';
+    html+='<img src="'+p.img+'" alt="'+p.name+'" onerror="this.style.display=\'none\'">';
     html+='</div><div class="card-body">';
     html+='<div class="card-brand">'+p.brand+'</div>';
     html+='<div class="card-name">'+p.name+'</div>';

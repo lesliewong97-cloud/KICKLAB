@@ -627,8 +627,8 @@ function filterBySize(size, btn){
   let html='<div style="font-size:13px;color:#888;margin-bottom:1rem">'+matching.length+' style'+(matching.length!==1?'s':'')+' available in '+size+'</div><div class="products">';
   matching.forEach(p=>{
     const sizeInfo=p.sizes.find(s=>s.uk===size);
-    const stockLabel=sizeInfo.stock===1?'Last pair':sizeInfo.stock+' left';
-    const stockColor=sizeInfo.stock===1?'#E63946':'#888';
+    const stockLabel=sizeInfo.stock===1?'🔴 Last pair':sizeInfo.stock===2?'⚡ Only 2 left':'';
+    const stockColor=sizeInfo.stock===1?'#E63946':sizeInfo.stock===2?'#f59e0b':'#888';
     html+='<a class="card" href="/#'+p.slug+'" onclick="event.preventDefault();openProduct('+p.id+')">';
     html+='<div class="card-img">';
     if(p.badge) html+='<span class="badge badge-'+(p.badge==='new'?'new':'hot')+'">'+(p.badge==='new'?'NEW':'🔥 HOT')+'</span>';
@@ -725,8 +725,8 @@ function openProduct(id, skipHistory=false){
               const dispPrice=isHalf?p.price-10:p.price;
               const boxLabel=isHalf?'Half box':'Full box';
               const boxColor=isHalf?'#f59e0b':'#25a244';
-              const stockColor=s.stock===1?'#E63946':s.stock<=2?'#f59e0b':'#aaa';
-              const stockLabel=s.stock===0?'Sold Out':s.stock===1?'Last pair':s.stock+' pairs';
+              const stockColor=s.stock===1?'#E63946':s.stock===2?'#f59e0b':'transparent';
+              const stockLabel=s.stock===0?'Sold Out':s.stock===1?'🔴 Last pair':s.stock===2?'⚡ Only 2 left':'';
               return '<button class="size-btn'+(s.stock===0?' disabled':'')+'" onclick="'+(s.stock>0?'selectSize(this,\''+s.uk+'\',\''+s.box+'\','+dispPrice+')':'')+'">'
                 +s.uk+'<br>'
                 +'<span style="font-size:9px;color:'+boxColor+';font-weight:700">'+boxLabel+'</span><br>'

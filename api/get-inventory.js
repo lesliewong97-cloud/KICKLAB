@@ -2,25 +2,28 @@ export default async function handler(req, res) {
   try {
     const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
     const sheetId = process.env.GOOGLE_SHEETS_ID;
-
     const token = await getAccessToken(serviceAccount);
-
     const readRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:C`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:E`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     const data = await readRes.json();
     const rows = data.values || [];
 
-    // Build inventory object: { "FD6574-104": { "UK 7": 1, "UK 7.5": 2 } }
+    // Build inventory object:
+    // { "DV0833-102": { "UK 8": { full: 6, half: 0 }, "UK 8.5": { full: 3, half: 2 } } }
     const inventory = {};
     for (let i = 1; i < rows.length; i++) {
-      const [sku, size, stock] = rows[i];
+      const [sku, size, fullBox, halfBox] = rows[i];
+      if (!sku || !size) continue;
       if (!inventory[sku]) inventory[sku] = {};
-      inventory[sku][size] = parseInt(stock) || 0;
+      inventory[sku][size] = {
+        full: parseInt(fullBox) || 0,
+        half: parseInt(halfBox) || 0,
+      };
     }
 
-    res.setHeader('Cache-Control', 's-maxage=30'); // cache 30 seconds
+    res.setHeader('Cache-Control', 's-maxage=30');
     return res.status(200).json(inventory);
   } catch (error) {
     console.error('get-inventory error:', error.message);

@@ -782,24 +782,18 @@ function openProduct(id, skipHistory=false){
             let html='';
             if(fullSizes.length){
               html+='<div style="margin-bottom:1.25rem">';
-              html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
-              html+='<span style="font-size:11px;font-weight:700;color:#25a244;letter-spacing:.5px">● FULL BOX</span>';
-              html+='<span style="font-family:var(--font-head);font-size:18px;font-weight:700;color:#1A1A2E">RM '+fullPrice+'</span>';
-              html+='<span style="font-family:var(--font-head);font-size:16px;font-weight:700;color:#1A1A2E">RM '+fullPrice+'</span>';
+              html+='<div style="font-size:11px;font-weight:700;color:#25a244;letter-spacing:.5px;margin-bottom:10px">● FULL BOX</div>';
               html+='<div style="display:flex;flex-wrap:wrap;gap:8px">'+fullSizes.map(s=>makeBtn(s,'full',fullPrice)).join('')+'</div>';
               html+='</div>';
-              html+='<div style="border-top:1.5px solid #f0f0f0;margin-bottom:1.25rem"></div>';
             }
             if(halfSizes.length){
+              if(fullSizes.length) html+='<div style="border-top:1.5px solid #f0f0f0;margin-bottom:1.25rem"></div>';
               html+='<div>';
-              html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
-              html+='<div style="display:flex;align-items:center;gap:10px">';
+              html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
               html+='<span style="font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:.5px">● HALF BOX</span>';
               html+='<button onclick="document.getElementById(\'boxExplainer\').open=!document.getElementById(\'boxExplainer\').open" style="background:none;border:none;font-size:11px;color:#aaa;cursor:pointer;text-decoration:underline;padding:0;font-family:var(--font-body)">📦 What is this?</button>';
               html+='</div>';
-              html+='<span style="font-family:var(--font-head);font-size:16px;font-weight:700;color:#1A1A2E">RM '+halfPrice+'</span>';
-              html+='</div>';
-              html+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">'+halfSizes.map(s=>makeBtn(s,'half',halfPrice)).join('')+'</div>';
+              html+='<div style="display:flex;flex-wrap:wrap;gap:8px">'+halfSizes.map(s=>makeBtn(s,'half',halfPrice)).join('')+'</div>';
               html+='</div>';
             }
             return html;

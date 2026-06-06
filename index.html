@@ -723,27 +723,8 @@ function openProduct(id, skipHistory=false){
         <div class="detail-colorway">${p.colorway}</div>
         <div class="detail-price" id="detailPriceDisplay">RM ${p.price} <span>/ pairs</span></div>
         ${p.retail?`<div style="font-size:13px;color:#888;margin-top:-12px;margin-bottom:1.5rem">Retail: <span style="text-decoration:line-through">RM ${p.retail}</span> &nbsp;·&nbsp; <span style="color:#25a244;font-weight:600">Save RM ${p.retail-p.price} (${Math.round((p.retail-p.price)/p.retail*100)}% off)</span></div>`:''}
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><div style="font-size:12px;font-weight:600;letter-spacing:.5px">Select Size (UK)</div><button class="size-guide-link" onclick="openSizeChart(${p.id})">📏 Size Guide</button></div>
-        <div class="sizes">
-          ${p.sizes&&p.sizes.length>0
-            ?p.sizes.map(s=>{
-              const isHalf=s.box==='half';
-              const dispPrice=isHalf?p.price-10:p.price;
-              const boxLabel=isHalf?'Half box':'Full box';
-              const boxColor=isHalf?'#f59e0b':'#25a244';
-              const stockColor=s.stock===1?'#E63946':s.stock===2?'#f59e0b':'transparent';
-              const stockLabel=s.stock===0?'Sold Out':s.stock===1?'🔴 Last pair':s.stock===2?'⚡ Only 2 left':'';
-              const stockHtml=stockLabel?'<span style="font-size:9px;color:'+stockColor+';font-weight:500">'+stockLabel+'</span>':'<span style="font-size:9px;color:transparent">·</span>';
-              return '<button class="size-btn'+(s.stock===0?' disabled':'')+'" onclick="'+(s.stock>0?'selectSize(this,\''+s.uk+'\',\''+s.box+'\','+dispPrice+')':'')+'">'
-                +'<span style="font-size:13px;font-weight:700;color:inherit">'+s.uk+'</span>'
-                +'<span style="font-size:9px;font-weight:700;color:'+boxColor+'">'+boxLabel+'</span>'
-                +stockHtml
-                +'</button>';
-            }).join('')
-            :`<div style="font-size:13px;color:#888">${p.sizeNote||'Sizes coming soon'}</div>`}
-        </div>
-
-        <details style="margin-top:1rem;border:1px solid #eee;border-radius:10px;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><div style="font-size:12px;font-weight:600;letter-spacing:.5px">Select Size (UK)</div><div style="display:flex;gap:12px"><button class="size-guide-link" onclick="openSizeChart(${p.id})">📏 Size Guide</button><button class="size-guide-link" style="color:#f59e0b" onclick="document.getElementById('boxExplainer').open=!document.getElementById('boxExplainer').open">📦 Half Box?</button></div></div>
+        <details id="boxExplainer" style="margin-bottom:1rem;border:1px solid #eee;border-radius:10px;overflow:hidden">
           <summary style="padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;background:#f8f8f8">
             <span>📦 What is a Half Box?</span>
             <span style="font-size:11px;color:#aaa;font-weight:400">tap to see</span>
@@ -751,8 +732,7 @@ function openProduct(id, skipHistory=false){
           <div style="padding:12px 16px;font-size:12px;color:#666;line-height:1.7;border-top:1px solid #eee">
             Some shoes come with the box lid trimmed — a common practice for outlet or clearance stock. The shoes inside are <strong>brand new and unworn</strong>. Half box items are sold at <strong style="color:#f59e0b">RM10 off</strong>.
           </div>
-          <div style="padding:0 12px 12px">
-            <svg width="100%" viewBox="0 0 680 360" role="img">
+          <div style="padding:0 12px 12px"><svg width="100%" viewBox="0 0 680 360" role="img">
               <title>Full box vs half box</title>
               <desc>Full box has lid intact at original price. Half box has lid trimmed off at RM10 discount.</desc>
               <text x="180" y="48" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="15" font-weight="600" fill="#1A1A2E">Full box</text>
@@ -784,7 +764,25 @@ function openProduct(id, skipHistory=false){
             </svg>
           </div>
         </details>
-        <button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>
+        <div class="sizes">
+          ${p.sizes&&p.sizes.length>0
+            ?p.sizes.map(s=>{
+              const isHalf=s.box==='half';
+              const dispPrice=isHalf?p.price-10:p.price;
+              const boxLabel=isHalf?'Half box':'Full box';
+              const boxColor=isHalf?'#f59e0b':'#25a244';
+              const stockColor=s.stock===1?'#E63946':s.stock===2?'#f59e0b':'transparent';
+              const stockLabel=s.stock===0?'Sold Out':s.stock===1?'🔴 Last pair':s.stock===2?'⚡ Only 2 left':'';
+              const stockHtml=stockLabel?'<span style="font-size:9px;color:'+stockColor+';font-weight:500">'+stockLabel+'</span>':'<span style="font-size:9px;color:transparent">·</span>';
+              return '<button class="size-btn'+(s.stock===0?' disabled':'')+'" onclick="'+(s.stock>0?'selectSize(this,\''+s.uk+'\',\''+s.box+'\','+dispPrice+')':'')+'">'
+                +'<span style="font-size:13px;font-weight:700;color:inherit">'+s.uk+'</span>'
+                +'<span style="font-size:9px;font-weight:700;color:'+boxColor+'">'+boxLabel+'</span>'
+                +stockHtml
+                +'</button>';
+            }).join('')
+            :`<div style="font-size:13px;color:#888">${p.sizeNote||'Sizes coming soon'}</div>`}
+        </div>
+<button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>
         <a class="detail-wa-btn" href="https://wa.me/60102347825?text=Hi%2C+I+would+like+to+enquire+about+${encodeURIComponent(p.name)}+(${p.sku})" target="_blank" style="text-decoration:none">💬 WhatsApp Us</a>
         <div class="detail-desc"><h4>Product Description</h4><p>${p.desc}</p></div>
       </div>

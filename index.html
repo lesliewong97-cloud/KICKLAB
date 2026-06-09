@@ -707,6 +707,11 @@ function switchDetailImg(src, thumb){
   if(thumb) thumb.classList.add('active');
 }
 
+function checkThumbStrip(){
+  const strip=document.getElementById('thumbStrip');
+  if(strip && strip.querySelectorAll('.detail-thumb').length<=1) strip.style.display='none';
+}
+
 function openProduct(id, skipHistory=false){
   const p=products.find(x=>x.id===id);
   selectedSize=null;
@@ -778,7 +783,15 @@ function openProduct(id, skipHistory=false){
     <div class="detail-grid">
       <div class="detail-gallery">
         <div class="detail-img-wrap"><img id="detailMainImg" src="${p.img}" alt="${p.name}"></div>
-        ${(()=>{const all=p.imgs?p.imgs:[p.img];return all.length>1?`<div class="detail-thumb-strip">${all.map((src,i)=>`<div class="detail-thumb${i===0?' active':''}" onclick="switchDetailImg('${src}',this)"><img src="${src}" alt=""></div>`).join('')}</div>`:''})()}
+        ${(()=>{
+          const ext=p.img.includes('.')?p.img.split('.').pop():'jpeg';
+          const base=p.img.slice(0,p.img.lastIndexOf('.'));
+          const extras=Array.from({length:5},(_,i)=>`${base}-${i+2}.${ext}`);
+          return `<div class="detail-thumb-strip" id="thumbStrip" style="display:none">
+            <div class="detail-thumb active" onclick="switchDetailImg('${p.img}',this)"><img src="${p.img}" alt=""></div>
+            ${extras.map(src=>`<div class="detail-thumb" onclick="switchDetailImg('${src}',this)"><img src="${src}" onerror="this.parentElement.remove();checkThumbStrip()" onload="document.getElementById('thumbStrip').style.display='flex'" alt=""></div>`).join('')}
+          </div>`;
+        })()}
       </div>
       <div class="detail-info">
         <div class="detail-brand">${p.brand}</div>

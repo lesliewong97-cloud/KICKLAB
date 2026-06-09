@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   const itemsDesc = items.map(i =>
-    `${i.name} UK${i.size ? i.size.replace('UK ','') : 'N/A'} (${i.sku}) x${i.qty}`
+    `${i.name} UK${i.size ? i.size.replace('UK ','') : 'N/A'} (${i.sku}) [${i.box === 'half' ? 'Half Box' : 'Full Box'}] x${i.qty}`
   ).join(', ');
 
   const description = [

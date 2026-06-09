@@ -686,7 +686,6 @@ function renderGenderCards(){
   grid.innerHTML=genders.map(g=>{
     const count=products.filter(p=>getProductGender(p)===g.id).length;
     return `<div class="gender-card ${g.cls}" onclick="openGender('${g.id}')">
-      <div class="gender-card-icon">${g.icon}</div>
       <div class="gender-card-arrow">→</div>
       <div class="gender-card-label">${g.label}</div>
       <div class="gender-card-count">${count} style${count!==1?'s':''}</div>

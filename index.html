@@ -1302,8 +1302,9 @@ async function loadInventory(){
         // New format: { "UK 8": { full: 6, half: 2 } }
         const sizes=[];
         Object.entries(inventory[p.sku]).forEach(([size,boxData])=>{
-          if(boxData.full>0) sizes.push({uk:size,stock:boxData.full,box:'full'});
-          if(boxData.half>0) sizes.push({uk:size,stock:boxData.half,box:'half'});
+          const normSize=size.startsWith('UK ')?size:'UK '+size;
+          if(boxData.full>0) sizes.push({uk:normSize,stock:boxData.full,box:'full'});
+          if(boxData.half>0) sizes.push({uk:normSize,stock:boxData.half,box:'half'});
         });
         // Sort by size numerically
         sizes.sort((a,b)=>{
@@ -1423,6 +1424,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSearch(
 </div>
 </body>
 </html>
+
+
 
 
 

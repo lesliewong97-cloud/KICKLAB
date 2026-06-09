@@ -81,7 +81,7 @@ async function sendOrderEmail(bill, description, orderNum, address, shippingFee,
       <tr>
         <td style="padding:12px 0;border-bottom:1px solid #f0f0f0">
           <p style="margin:0;font-size:13px;font-weight:600;color:#1A1A2E">👟 ${item.sku}</p>
-          <p style="margin:2px 0 0;font-size:12px;color:#888">${item.size} · Qty: ${item.qty}</p>
+          <p style="margin:2px 0 0;font-size:12px;color:#888">${item.size}${item.box ? ' · ' + (item.box === 'half' ? 'Half Box' : 'Full Box') : ''} · Qty: ${item.qty}</p>
         </td>
       </tr>
     `;
@@ -201,10 +201,17 @@ async function updateInventory(items) {
   const updates = [];
   for (const item of items) {
     for (let i = 1; i < rows.length; i++) {
-      const [sku, size, , , stock] = rows[i];
+      const [sku, size, fullBox, halfBox, stock] = rows[i];
       if (sku === item.sku && size === item.size) {
-        const newStock = Math.max(0, parseInt(stock) - item.qty);
+        const newStock = Math.max(0, parseInt(stock || 0) - item.qty);
         updates.push({ range: `Sheet1!E${i + 1}`, values: [[newStock]] });
+        if (item.box === 'half') {
+          const newHalf = Math.max(0, parseInt(halfBox || 0) - item.qty);
+          updates.push({ range: `Sheet1!D${i + 1}`, values: [[newHalf]] });
+        } else if (item.box === 'full') {
+          const newFull = Math.max(0, parseInt(fullBox || 0) - item.qty);
+          updates.push({ range: `Sheet1!C${i + 1}`, values: [[newFull]] });
+        }
       }
     }
   }

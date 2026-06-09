@@ -288,6 +288,14 @@ a.logo span{color:#E63946}
 .sizechart-tip{background:#f8f8f8;border-radius:8px;padding:10px 14px;font-size:12px;color:#666;line-height:1.6;margin-top:.5rem}
 .sizechart-tip strong{color:#1A1A2E}
 .size-guide-link{background:none;border:none;font-size:12px;color:#888;cursor:pointer;font-family:var(--font-body);text-decoration:underline;padding:0;margin-top:.5rem;display:block}
+
+/* PRODUCT IMAGE GALLERY */
+.detail-gallery{display:flex;flex-direction:column;gap:10px}
+.detail-thumb-strip{display:flex;gap:8px;flex-wrap:wrap}
+.detail-thumb{width:64px;height:64px;background:#f8f8f8;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border-color .2s;flex-shrink:0}
+.detail-thumb:hover{border-color:#ccc}
+.detail-thumb.active{border-color:#1A1A2E}
+.detail-thumb img{width:100%;height:100%;object-fit:contain;padding:4px}
 </style>
 </head>
 <body>
@@ -692,6 +700,13 @@ function filterBySize(size, btn){
   resultsEl.innerHTML=html;
   resultsEl.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function switchDetailImg(src, thumb){
+  const mainImg=document.getElementById('detailMainImg');
+  if(mainImg) mainImg.src=src;
+  document.querySelectorAll('.detail-thumb').forEach(t=>t.classList.remove('active'));
+  if(thumb) thumb.classList.add('active');
+}
+
 function openProduct(id, skipHistory=false){
   const p=products.find(x=>x.id===id);
   selectedSize=null;
@@ -761,7 +776,10 @@ function openProduct(id, skipHistory=false){
     document.getElementById('detailContent').innerHTML=`
     <button class="back-btn" onclick="history.back()">← Back</button>
     <div class="detail-grid">
-      <div class="detail-img-wrap"><img src="${p.img}" alt="${p.name}"></div>
+      <div class="detail-gallery">
+        <div class="detail-img-wrap"><img id="detailMainImg" src="${p.img}" alt="${p.name}"></div>
+        ${(()=>{const all=p.imgs?p.imgs:[p.img];return all.length>1?`<div class="detail-thumb-strip">${all.map((src,i)=>`<div class="detail-thumb${i===0?' active':''}" onclick="switchDetailImg('${src}',this)"><img src="${src}" alt=""></div>`).join('')}</div>`:''})()}
+      </div>
       <div class="detail-info">
         <div class="detail-brand">${p.brand}</div>
         <div class="detail-name">${p.name}</div>

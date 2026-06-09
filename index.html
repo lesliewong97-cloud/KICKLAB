@@ -726,10 +726,8 @@ function openProduct(id, skipHistory=false){
   selectedBox=null;
   selectedPrice=null;
   currentProductId=id;
-  // Save scroll position only when leaving shop page (not category)
-  if(document.getElementById('page-shop').classList.contains('active')){
-    sessionStorage.setItem('scrollPos', window.scrollY);
-  }
+  // Save scroll position from whichever page we're on
+  sessionStorage.setItem('scrollPos', window.scrollY);
 
   document.getElementById('detailContent').innerHTML=`
     <div style="padding:0">
@@ -892,6 +890,8 @@ window.addEventListener('popstate',function(e){
     openProduct(productId,true);
   }else if(page==='category'&&catId){
     openCategory(catId,true);
+    const savedCatPos=parseInt(sessionStorage.getItem('scrollPos')||'0');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,savedCatPos)));
   }else{
     const idx={'shop':0,'about':1,'contact':2};
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));

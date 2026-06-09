@@ -192,7 +192,7 @@ async function updateInventory(items) {
   const token = await getAccessToken(serviceAccount);
 
   const readRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:C`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:E`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const data = await readRes.json();
@@ -201,10 +201,10 @@ async function updateInventory(items) {
   const updates = [];
   for (const item of items) {
     for (let i = 1; i < rows.length; i++) {
-      const [sku, size, stock] = rows[i];
+      const [sku, size, , , stock] = rows[i];
       if (sku === item.sku && size === item.size) {
         const newStock = Math.max(0, parseInt(stock) - item.qty);
-        updates.push({ range: `Sheet1!C${i + 1}`, values: [[newStock]] });
+        updates.push({ range: `Sheet1!E${i + 1}`, values: [[newStock]] });
       }
     }
   }

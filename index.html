@@ -281,6 +281,32 @@ a.logo span{color:#E63946}
   .cat-body{padding:12px 14px}
 }
 
+/* REVIEWS */
+.reviews-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px}
+.write-review-btn{background:#1A1A2E;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-body);transition:background .2s}
+.write-review-btn:hover{background:#E63946}
+.review-slider-outer{display:flex;align-items:center;gap:12px}
+.slider-arrow{background:#fff;border:1.5px solid #eee;border-radius:50%;width:40px;height:40px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;color:#1A1A2E;line-height:1}
+.slider-arrow:hover{background:#1A1A2E;color:#fff;border-color:#1A1A2E}
+.review-slider-wrap{overflow:hidden;flex:1}
+.review-slider{display:flex;transition:transform .35s ease;gap:16px}
+.review-card{background:#f8f8f8;border-radius:14px;padding:1.5rem;flex:0 0 calc(33.333% - 11px);min-width:0;display:flex;flex-direction:column;gap:10px}
+.review-stars{color:#E63946;font-size:18px;letter-spacing:2px}
+.review-text{font-size:14px;color:#444;line-height:1.6;flex:1;font-style:italic}
+.review-footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto}
+.review-name{font-weight:600;font-size:13px;color:#1A1A2E}
+.review-date{font-size:12px;color:#aaa}
+.review-empty{color:#aaa;font-size:14px;padding:2rem 0;text-align:center;width:100%}
+.review-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center;padding:1rem}
+.review-modal-overlay.open{display:flex}
+.review-modal{background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:460px;display:flex;flex-direction:column;gap:14px}
+.review-modal-header{display:flex;justify-content:space-between;align-items:center}
+.review-modal-title{font-family:var(--font-head);font-size:22px;font-weight:700;color:#1A1A2E}
+.review-modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;line-height:1}
+.star-picker{display:flex;gap:6px;font-size:32px;cursor:pointer}
+.star-pick{color:#ddd;transition:color .15s;line-height:1}
+.star-pick.active{color:#E63946}
+
 /* SIZE CHART MODAL */
 .sizechart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
 .sizechart-overlay.open{display:flex}
@@ -386,6 +412,41 @@ a.logo span{color:#E63946}
     <div class="section-title">Shop by Size</div>
     <div style="font-size:13px;color:#888;margin-bottom:1.25rem">Select your size to see all available shoes</div>
     <div class="size-filter-grid" id="sizeFilterGrid"></div>
+  </div>
+
+  <div class="section" id="shopReviews">
+    <div class="reviews-header">
+      <div class="section-title">What Our Customers Say</div>
+      <button class="write-review-btn" onclick="openReviewModal()">✍️ Write a Review</button>
+    </div>
+    <div class="review-slider-outer">
+      <button class="slider-arrow slider-arrow-left" onclick="slideReviews(-1)">&#8249;</button>
+      <div class="review-slider-wrap" id="reviewSliderWrap">
+        <div class="review-slider" id="reviewSlider"><div class="review-empty">Loading reviews...</div></div>
+      </div>
+      <button class="slider-arrow slider-arrow-right" onclick="slideReviews(1)">&#8250;</button>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="review-modal-overlay" id="reviewModalOverlay" onclick="closeReviewModal(event)">
+  <div class="review-modal">
+    <div class="review-modal-header">
+      <div class="review-modal-title">Leave a Review</div>
+      <button class="review-modal-close" onclick="closeReviewModal()">✕</button>
+    </div>
+    <div style="font-size:13px;color:#888">How was your experience with KICKLAB?</div>
+    <div class="star-picker" id="starPicker">
+      <span class="star-pick" onclick="pickStar(1)">★</span>
+      <span class="star-pick" onclick="pickStar(2)">★</span>
+      <span class="star-pick" onclick="pickStar(3)">★</span>
+      <span class="star-pick" onclick="pickStar(4)">★</span>
+      <span class="star-pick" onclick="pickStar(5)">★</span>
+    </div>
+    <input class="f-input" id="reviewName" placeholder="Your Name (optional)" style="margin:0">
+    <textarea class="f-input" id="reviewMessage" rows="4" placeholder="Share your experience with KICKLAB..." style="resize:none;margin:0"></textarea>
+    <button class="send-btn" onclick="submitReview()">Submit Review →</button>
   </div>
 </div>
 
@@ -745,6 +806,114 @@ function renderProducts(){
   renderCategories();
   renderGenderCards();
   renderSizeFilter();
+  fetchReviews();
+}
+
+// ── REVIEWS ──────────────────────────────────────────────────────────────
+let reviewsData = [];
+let reviewSliderIndex = 0;
+let selectedRating = 0;
+
+async function fetchReviews() {
+  try {
+    const res = await fetch('/api/get-reviews');
+    reviewsData = await res.json();
+    renderReviews();
+  } catch(e) {
+    const s = document.getElementById('reviewSlider');
+    if(s) s.innerHTML = '<div class="review-empty">No reviews yet. Be the first!</div>';
+  }
+}
+
+function renderReviews() {
+  const slider = document.getElementById('reviewSlider');
+  if(!slider) return;
+  if(!reviewsData.length) {
+    slider.innerHTML = '<div class="review-empty">No reviews yet — be the first to leave one! 🙏</div>';
+    return;
+  }
+  slider.innerHTML = reviewsData.map(r => {
+    const filled = '★'.repeat(r.rating);
+    const empty = '☆'.repeat(5 - r.rating);
+    return `<div class="review-card">
+      <div class="review-stars">${filled}${empty}</div>
+      <div class="review-text">"${r.message}"</div>
+      <div class="review-footer">
+        <div class="review-name">${r.name || 'Anonymous'}</div>
+        <div class="review-date">${r.date}</div>
+      </div>
+    </div>`;
+  }).join('');
+  reviewSliderIndex = 0;
+  updateSliderPosition();
+}
+
+function getVisibleCards() {
+  return window.innerWidth < 600 ? 1 : window.innerWidth < 900 ? 2 : 3;
+}
+
+function slideReviews(dir) {
+  const maxIndex = Math.max(0, reviewsData.length - getVisibleCards());
+  reviewSliderIndex = Math.max(0, Math.min(reviewSliderIndex + dir, maxIndex));
+  updateSliderPosition();
+}
+
+function updateSliderPosition() {
+  const wrap = document.getElementById('reviewSliderWrap');
+  const slider = document.getElementById('reviewSlider');
+  if(!wrap || !slider) return;
+  const cardWidth = wrap.offsetWidth / getVisibleCards();
+  slider.style.transform = `translateX(-${reviewSliderIndex * (cardWidth + 16)}px)`;
+  const leftBtn = document.querySelector('.slider-arrow-left');
+  const rightBtn = document.querySelector('.slider-arrow-right');
+  if(leftBtn) leftBtn.style.opacity = reviewSliderIndex === 0 ? '0.3' : '1';
+  if(rightBtn) {
+    const maxIndex = Math.max(0, reviewsData.length - getVisibleCards());
+    rightBtn.style.opacity = reviewSliderIndex >= maxIndex ? '0.3' : '1';
+  }
+}
+
+function openReviewModal() {
+  selectedRating = 0;
+  document.getElementById('reviewName').value = '';
+  document.getElementById('reviewMessage').value = '';
+  updateStarPicker(0);
+  document.getElementById('reviewModalOverlay').classList.add('open');
+}
+
+function closeReviewModal(e) {
+  if(!e || e.target === document.getElementById('reviewModalOverlay')) {
+    document.getElementById('reviewModalOverlay').classList.remove('open');
+  }
+}
+
+function pickStar(val) {
+  selectedRating = val;
+  updateStarPicker(val);
+}
+
+function updateStarPicker(val) {
+  document.querySelectorAll('.star-pick').forEach((s,i) => {
+    s.classList.toggle('active', i < val);
+  });
+}
+
+async function submitReview() {
+  const name = document.getElementById('reviewName').value.trim();
+  const message = document.getElementById('reviewMessage').value.trim();
+  if(!selectedRating){ showToast('Please select a star rating ⭐'); return; }
+  if(!message){ showToast('Please write something about your experience'); return; }
+  try {
+    await fetch('/api/submit-review', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name, rating:selectedRating, message}),
+    });
+    closeReviewModal();
+    showToast('Thanks for your review! It will be published after approval 🙏');
+  } catch(e) {
+    showToast('Something went wrong, please try again');
+  }
 }
 
 function renderSizeFilter(){

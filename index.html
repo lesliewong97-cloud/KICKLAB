@@ -559,6 +559,19 @@ a.logo span{color:#E63946}
   </div>
 </div>
 
+<!-- ADMIN PAGE (hidden, password protected) -->
+<div class="page" id="page-admin">
+  <div style="max-width:480px;margin:60px auto;padding:0 16px" id="adminLoginBox">
+    <h2 style="margin-bottom:16px">Admin Login</h2>
+    <input class="f-input" id="adminPasswordInput" type="password" placeholder="Password" style="margin-bottom:12px">
+    <button class="send-btn" onclick="adminLogin()">Login →</button>
+  </div>
+  <div style="max-width:900px;margin:30px auto;padding:0 16px;display:none" id="adminOrdersBox">
+    <h2 style="margin-bottom:16px">Preorder Orders</h2>
+    <div id="adminOrdersList">Loading...</div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -946,6 +959,7 @@ async function submitPreorder(){
         name,phone,
         email:email||'noreply@kicklab.com',
         deposit:p.deposit,
+        price:p.price,
         sku:p.sku,
         productName:`${p.brand} ${p.name}`,
         size,
@@ -1368,6 +1382,10 @@ window.addEventListener('DOMContentLoaded',function(){
     showPage('about',document.querySelectorAll('.nav-links a')[1]);
   }else if(hash==='contact'){
     showPage('contact',document.querySelectorAll('.nav-links a')[2]);
+  }else if(hash==='admin-orders-x9k2'){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-admin').classList.add('active');
+    window.scrollTo(0,0);
   }else if(categories.find(c=>c.id===hash)){
     openCategory(hash, true);
   }else{
@@ -1882,6 +1900,92 @@ function doSearch(q){
   `).join('')}</div>`;
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSearch();});
+
+let adminPassword='';
+function adminLogin(){
+  const pw=document.getElementById('adminPasswordInput').value;
+  if(!pw){showToast('Please enter password','error');return;}
+  adminPassword=pw;
+  document.getElementById('adminLoginBox').style.display='none';
+  document.getElementById('adminOrdersBox').style.display='block';
+  loadAdminOrders();
+}
+async function loadAdminOrders(){
+  const list=document.getElementById('adminOrdersList');
+  list.innerHTML='Loading...';
+  try{
+    const res=await fetch('/api/admin-preorder',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:adminPassword,action:'list'})
+    });
+    if(res.status===401){
+      document.getElementById('adminLoginBox').style.display='block';
+      document.getElementById('adminOrdersBox').style.display='none';
+      showToast('Wrong password','error');
+      return;
+    }
+    const data=await res.json();
+    const orders=data.orders||[];
+    if(orders.length===0){
+      list.innerHTML='<p style="color:#888">No preorder orders yet.</p>';
+      return;
+    }
+    list.innerHTML=orders.slice().reverse().map(o=>{
+      const isEast=/sabah|sarawak|labuan/i.test(o.address||'');
+      const shipping=isEast?25:8;
+      const balance=Math.max(0,(parseFloat(o.price)||0)-(parseFloat(o.deposit)||0)+shipping);
+      let actionBtn='';
+      if(o.status==='Pending Arrival'){
+        actionBtn=`<button class="send-btn" style="margin-top:10px" onclick="notifyCustomer('${o.orderNum}',this)">Notify Customer (Balance RM${balance.toFixed(2)}) →</button>`;
+      }
+      return `
+        <div style="background:#f8f8f8;border-radius:10px;padding:16px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div>
+              <p style="margin:0;font-weight:700;font-size:15px;color:#1A1A2E">#${o.orderNum} · ${o.name}</p>
+              <p style="margin:4px 0 0;font-size:13px;color:#666">📱 ${o.phone} · ✉️ ${o.email}</p>
+            </div>
+            <div style="text-align:right">
+              <span style="display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;background:${o.status==='Paid - Ready to Ship'?'#2ecc71':o.status==='Awaiting Balance Payment'?'#f39c12':'#aaa'};color:#fff">${o.status||'Pending'}</span>
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:13px;color:#444;line-height:1.7">
+            👟 ${o.product} (${o.sku}) · ${o.size}<br>
+            ETA: ${o.eta} · Deposit: RM${o.deposit} · Full Price: RM${o.price}<br>
+            📍 ${o.address}
+          </div>
+          ${actionBtn}
+        </div>
+      `;
+    }).join('');
+  }catch(err){
+    list.innerHTML='<p style="color:#E63946">Failed to load orders.</p>';
+  }
+}
+async function notifyCustomer(orderNum,btn){
+  btn.disabled=true;
+  btn.textContent='Sending...';
+  try{
+    const res=await fetch('/api/admin-preorder',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:adminPassword,action:'notify',orderNum})
+    });
+    const data=await res.json();
+    if(!res.ok){
+      showToast(data.error?.message||'Failed to notify customer','error');
+      btn.disabled=false;
+      btn.textContent='Retry →';
+      return;
+    }
+    showToast('Customer notified! Email sent.');
+    loadAdminOrders();
+  }catch(err){
+    showToast('Failed to notify customer','error');
+    btn.disabled=false;
+  }
+}
 </script>
 
 <!-- SIZE CHART MODAL -->

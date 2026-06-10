@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     const token = await getAccessToken(serviceAccount);
     const date = new Date().toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet2!A:E:append?valueInputOption=RAW`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Customer Reviews')}!A:E:append?valueInputOption=RAW`,
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },

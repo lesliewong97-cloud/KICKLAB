@@ -445,7 +445,7 @@ async function updateInventory(items) {
   const token = await getAccessToken(serviceAccount);
 
   const readRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:E`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Inventory!A:E`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const data = await readRes.json();
@@ -457,13 +457,13 @@ async function updateInventory(items) {
       const [sku, size, fullBox, halfBox, stock] = rows[i];
       if (sku === item.sku && size === item.size) {
         const newStock = Math.max(0, parseInt(stock || 0) - item.qty);
-        updates.push({ range: `Sheet1!E${i + 1}`, values: [[newStock]] });
+        updates.push({ range: `Inventory!E${i + 1}`, values: [[newStock]] });
         if (item.box === 'half') {
           const newHalf = Math.max(0, parseInt(halfBox || 0) - item.qty);
-          updates.push({ range: `Sheet1!D${i + 1}`, values: [[newHalf]] });
+          updates.push({ range: `Inventory!D${i + 1}`, values: [[newHalf]] });
         } else if (item.box === 'full') {
           const newFull = Math.max(0, parseInt(fullBox || 0) - item.qty);
-          updates.push({ range: `Sheet1!C${i + 1}`, values: [[newFull]] });
+          updates.push({ range: `Inventory!C${i + 1}`, values: [[newFull]] });
         }
       }
     }

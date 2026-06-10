@@ -1759,6 +1759,32 @@ function toggleNav(){
 if('scrollRestoration' in history)history.scrollRestoration='manual';
 
 
+const newBalanceSizeData=[
+  {uk:'UK 3',   us:'US 3.5', eu:'EU 35.5', cm:'21.5'},
+  {uk:'UK 3.5', us:'US 4',   eu:'EU 36',   cm:'22.0'},
+  {uk:'UK 4',   us:'US 4.5', eu:'EU 37',   cm:'22.5'},
+  {uk:'UK 4.5', us:'US 5',   eu:'EU 37.5', cm:'23.0'},
+  {uk:'UK 5',   us:'US 5.5', eu:'EU 38',   cm:'23.5'},
+  {uk:'UK 5.5', us:'US 6',   eu:'EU 38.5', cm:'24.0'},
+  {uk:'UK 6',   us:'US 6.5', eu:'EU 39.5', cm:'24.5'},
+  {uk:'UK 6.5', us:'US 7',   eu:'EU 40',   cm:'25.0'},
+  {uk:'UK 7',   us:'US 7.5', eu:'EU 40.5', cm:'25.5'},
+  {uk:'UK 7.5', us:'US 8',   eu:'EU 41.5', cm:'26.0'},
+  {uk:'UK 8',   us:'US 8.5', eu:'EU 42',   cm:'26.5'},
+  {uk:'UK 8.5', us:'US 9',   eu:'EU 42.5', cm:'27.0'},
+  {uk:'UK 9',   us:'US 9.5', eu:'EU 43',   cm:'27.5'},
+  {uk:'UK 9.5', us:'US 10',  eu:'EU 44',   cm:'28.0'},
+  {uk:'UK 10',  us:'US 10.5',eu:'EU 44.5', cm:'28.5'},
+  {uk:'UK 10.5',us:'US 11',  eu:'EU 45',   cm:'29.0'},
+  {uk:'UK 11',  us:'US 11.5',eu:'EU 45.5', cm:'29.5'},
+  {uk:'UK 11.5',us:'US 12',  eu:'EU 46.5', cm:'30.0'},
+  {uk:'UK 12',  us:'US 12.5',eu:'EU 47',   cm:'30.5'},
+  {uk:'UK 12.5',us:'US 13',  eu:'EU 47.5', cm:'31.0'},
+  {uk:'UK 13.5',us:'US 14',  eu:'EU 49',   cm:'32.0'},
+  {uk:'UK 14.5',us:'US 15',  eu:'EU 50',   cm:'33.0'},
+  {uk:'UK 15.5',us:'US 16',  eu:'EU 51',   cm:'34.0'},
+  {uk:'UK 16.5',us:'US 17',  eu:'EU 52',   cm:'35.0'},
+];
 const nikeMenSizeData=[
   {uk:'UK 3',   us:'US 3.5', eu:'EU 35.5', cm:'22.5'},
   {uk:'UK 3.5', us:'US 4',   eu:'EU 36',   cm:'23.0'},
@@ -1837,7 +1863,7 @@ const sizeDataByBrand={
   'NIKE':{men:nikeMenSizeData,women:nikeWomenSizeData},
   'JORDAN':{men:sizeData,women:sizeData},
   'CONVERSE':{men:sizeData,women:sizeData},
-  'NEW BALANCE':{men:sizeData,women:sizeData},
+  'NEW BALANCE':{men:newBalanceSizeData,women:newBalanceSizeData},
   'ASICS':{men:sizeData,women:sizeData},
 };
 

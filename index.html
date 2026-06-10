@@ -540,7 +540,7 @@ a.logo span{color:#E63946}
     <button class="send-btn" onclick="adminLogin()">Login →</button>
   </div>
   <div style="max-width:900px;margin:30px auto;padding:0 16px;display:none" id="adminOrdersBox">
-    <h2 style="margin-bottom:16px">Preorder Orders</h2>
+    <h2 style="margin-bottom:16px">Orders</h2>
     <div id="adminOrdersList">Loading...</div>
   </div>
 </div>
@@ -2062,7 +2062,7 @@ async function loadAdminOrders(){
   const list=document.getElementById('adminOrdersList');
   list.innerHTML='Loading...';
   try{
-    const res=await fetch('/api/admin-preorder',{
+    const res=await fetch('/api/admin-orders',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({password:adminPassword,action:'list'})
@@ -2076,16 +2076,21 @@ async function loadAdminOrders(){
     const data=await res.json();
     const orders=data.orders||[];
     if(orders.length===0){
-      list.innerHTML='<p style="color:#888">No preorder orders yet.</p>';
+      list.innerHTML='<p style="color:#888">No orders yet.</p>';
       return;
     }
+    const statusColor={'Paid':'#f39c12','Shipped':'#2ecc71','Pending Payment':'#aaa'};
     list.innerHTML=orders.slice().reverse().map(o=>{
-      const isEast=/sabah|sarawak|labuan/i.test(o.address||'');
-      const shipping=isEast?25:8;
-      const balance=Math.max(0,(parseFloat(o.price)||0)-(parseFloat(o.deposit)||0)+shipping);
+      const itemsHtml=(o.items||[]).map(i=>`
+        <div style="margin-bottom:6px">
+          👟 ${i.isPreorder?'<span style="background:#1A1A2E;color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;margin-right:6px">📦 PREORDER</span>':''}${i.name||''} (${i.sku||''})${i.size?' · '+i.size:''}${i.box?' · '+(i.box==='half'?'Half Box':'Full Box'):''}${i.isPreorder&&i.eta?' · ETA: '+i.eta:''} · Qty: ${i.qty} · RM${i.price}
+        </div>
+      `).join('');
       let actionBtn='';
-      if(o.status==='Pending Arrival'){
-        actionBtn=`<button class="send-btn" style="margin-top:10px" onclick="notifyCustomer('${o.orderNum}',this)">Notify Customer (Balance RM${balance.toFixed(2)}) →</button>`;
+      if(o.status==='Paid'){
+        actionBtn=`<button class="send-btn" style="margin-top:10px" onclick="shipOrder('${o.orderNum}',this)">Mark as Shipped (Email Customer) →</button>`;
+      }else if(o.status==='Shipped'){
+        actionBtn=`<p style="margin-top:10px;font-size:13px;font-weight:700;color:#2ecc71">✅ Shipped</p>`;
       }
       return `
         <div style="background:#f8f8f8;border-radius:10px;padding:16px;margin-bottom:14px">
@@ -2093,15 +2098,20 @@ async function loadAdminOrders(){
             <div>
               <p style="margin:0;font-weight:700;font-size:15px;color:#1A1A2E">#${o.orderNum} · ${o.name}</p>
               <p style="margin:4px 0 0;font-size:13px;color:#666">📱 ${o.phone} · ✉️ ${o.email}</p>
+              <p style="margin:2px 0 0;font-size:11px;color:#bbb">${o.timestamp}</p>
             </div>
             <div style="text-align:right">
-              <span style="display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;background:${o.status==='Paid - Ready to Ship'?'#2ecc71':o.status==='Awaiting Balance Payment'?'#f39c12':'#aaa'};color:#fff">${o.status||'Pending'}</span>
+              <span style="display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700;background:${statusColor[o.status]||'#aaa'};color:#fff">${o.status||'Pending'}</span>
             </div>
           </div>
-          <div style="margin-top:10px;font-size:13px;color:#444;line-height:1.7">
-            👟 ${o.product} (${o.sku}) · ${o.size}<br>
-            ETA: ${o.eta} · Deposit: RM${o.deposit} · Full Price: RM${o.price}<br>
+          <div style="margin-top:10px;font-size:13px;color:#444;line-height:1.5">
+            ${itemsHtml}
+          </div>
+          <div style="margin-top:10px;font-size:13px;color:#444">
             📍 ${o.address}
+          </div>
+          <div style="margin-top:8px;font-size:13px;color:#888">
+            Subtotal: RM${o.subtotal} · Shipping: RM${o.shipping} · <strong style="color:#1A1A2E">Total: RM${o.total}</strong>
           </div>
           ${actionBtn}
         </div>
@@ -2111,26 +2121,26 @@ async function loadAdminOrders(){
     list.innerHTML='<p style="color:#E63946">Failed to load orders.</p>';
   }
 }
-async function notifyCustomer(orderNum,btn){
+async function shipOrder(orderNum,btn){
   btn.disabled=true;
   btn.textContent='Sending...';
   try{
-    const res=await fetch('/api/admin-preorder',{
+    const res=await fetch('/api/admin-orders',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({password:adminPassword,action:'notify',orderNum})
+      body:JSON.stringify({password:adminPassword,action:'ship',orderNum})
     });
     const data=await res.json();
     if(!res.ok){
-      showToast(data.error?.message||'Failed to notify customer','error');
+      showToast(data.error?.message||'Failed to mark as shipped','error');
       btn.disabled=false;
       btn.textContent='Retry →';
       return;
     }
-    showToast('Customer notified! Email sent.');
+    showToast('Order marked as shipped! Email sent.');
     loadAdminOrders();
   }catch(err){
-    showToast('Failed to notify customer','error');
+    showToast('Failed to mark as shipped','error');
     btn.disabled=false;
   }
 }

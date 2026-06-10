@@ -307,6 +307,20 @@ a.logo span{color:#E63946}
 .star-pick{color:#ddd;transition:color .15s;line-height:1}
 .star-pick.active{color:#E63946}
 
+/* PREORDER */
+.badge-preorder{background:#1A1A2E;color:#fff}
+.preorder-eta{font-size:11px;color:#E63946;font-weight:600;margin-bottom:6px}
+.preorder-empty{color:#aaa;font-size:14px;padding:2rem 0;text-align:center;grid-column:1/-1}
+.preorder-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center;padding:1rem}
+.preorder-modal-overlay.open{display:flex}
+.preorder-modal{background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:480px;display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow-y:auto}
+.preorder-modal-header{display:flex;justify-content:space-between;align-items:center}
+.preorder-modal-title{font-family:var(--font-head);font-size:20px;font-weight:700;color:#1A1A2E}
+.preorder-modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;line-height:1}
+.preorder-modal-product{display:flex;gap:12px;align-items:center;background:#f8f8f8;border-radius:10px;padding:10px}
+.preorder-modal-product img{width:64px;height:64px;object-fit:contain}
+.preorder-deposit-note{background:#fff8e1;color:#9a6b00;font-size:12px;border-radius:8px;padding:10px 12px;line-height:1.5}
+
 /* SIZE CHART MODAL */
 .sizechart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
 .sizechart-overlay.open{display:flex}
@@ -414,6 +428,12 @@ a.logo span{color:#E63946}
     <div class="size-filter-grid" id="sizeFilterGrid"></div>
   </div>
 
+  <div class="section" id="shopPreorder">
+    <div class="section-title">Preorder</div>
+    <div style="font-size:13px;color:#888;margin-bottom:1.25rem">Reserve these upcoming pairs now with a small deposit — estimated to arrive in about 2 weeks.</div>
+    <div class="products" id="preorderGrid"></div>
+  </div>
+
   <div class="section" id="shopReviews">
     <div class="reviews-header">
       <div class="section-title">What Our Customers Say</div>
@@ -447,6 +467,24 @@ a.logo span{color:#E63946}
     <input class="f-input" id="reviewName" placeholder="Your Name (optional)" style="margin:0">
     <textarea class="f-input" id="reviewMessage" rows="4" placeholder="Share your experience with KICKLAB..." style="resize:none;margin:0"></textarea>
     <button class="send-btn" onclick="submitReview()">Submit Review →</button>
+  </div>
+</div>
+
+<!-- PREORDER MODAL -->
+<div class="preorder-modal-overlay" id="preorderModalOverlay" onclick="closePreorderModal(event)">
+  <div class="preorder-modal">
+    <div class="preorder-modal-header">
+      <div class="preorder-modal-title">Preorder</div>
+      <button class="preorder-modal-close" onclick="closePreorderModal()">✕</button>
+    </div>
+    <div class="preorder-modal-product" id="preorderModalProduct"></div>
+    <div class="preorder-deposit-note" id="preorderDepositNote"></div>
+    <select class="f-input" id="preorderSize" style="margin:0"></select>
+    <input class="f-input" id="preorderName" placeholder="Your Name *" style="margin:0">
+    <input class="f-input" id="preorderPhone" placeholder="WhatsApp Number *" style="margin:0">
+    <input class="f-input" id="preorderEmail" placeholder="Email (optional)" style="margin:0">
+    <textarea class="f-input" id="preorderAddress" rows="2" placeholder="Shipping Address *" style="resize:none;margin:0"></textarea>
+    <button class="send-btn" id="preorderSubmitBtn" onclick="submitPreorder()">Pay Deposit →</button>
   </div>
 </div>
 
@@ -595,6 +633,10 @@ const products=[
   {id:55,brand:'NIKE',name:"Dunk High 'Vintage Black' (W)",slug:'nike-dunk-high-vintage-black-w',price:209,retail:489,img:'DQ8581-100.jpeg',cat:'sneakers',badge:'new',sku:'DQ8581-100',colorway:'White / Black / Coconut Milk',desc:'The Nike Dunk High "Vintage Black" brings an aged, premium aesthetic to the women\'s high-top silhouette. A white leather base is contrasted by black overlays with a Coconut Milk aged midsole — sophisticated, understated, and unmistakably premium.',sizes:[{uk:'UK 6',stock:1,box:'full'},{uk:'UK 6',stock:1,box:'half'}]},
   {id:56,brand:'NIKE',name:"Dunk High 'Blue Chill'",slug:'nike-dunk-high-blue-chill',price:219,retail:519,img:'DD1399-401.jpeg',cat:'sneakers',badge:'new',sku:'DD1399-401',colorway:'White / Blue Chill',desc:'The Nike Dunk High "Blue Chill" pairs a clean white leather base with cool Blue Chill overlays for a refreshing take on the classic high-top. A timeless and versatile colourway that stays true to the Dunk\'s iconic two-tone basketball heritage.',sizes:[{uk:'UK 6',stock:1,box:'full'},{uk:'UK 8',stock:1,box:'full'},{uk:'UK 8',stock:2,box:'half'},{uk:'UK 8.5',stock:1,box:'full'},{uk:'UK 14',stock:1,box:'full'}]},
   {id:57,brand:'NIKE',name:"Dunk Low 'Panda'",slug:'nike-dunk-low-panda',price:249,retail:489,img:'DD1391-100.jpeg',cat:'sneakers',badge:'new',sku:'DD1391-100',colorway:'Black / White',desc:'The Nike Dunk Low "Panda" is one of the most iconic sneaker colourways of the modern era. A clean white leather base is contrasted by bold black overlays, creating the timeless black-and-white "Panda" look that became a global cultural phenomenon.',sizes:[{uk:'UK 9',stock:2,box:'full'},{uk:'UK 10',stock:1,box:'full'}]},
+];
+
+// Preorder items — sold with a deposit, estimated ~2 weeks arrival
+const preorderProducts=[
 ];
 
 const categories=[
@@ -808,7 +850,124 @@ function renderProducts(){
   renderCategories();
   renderGenderCards();
   renderSizeFilter();
+  renderPreorders();
   fetchReviews();
+}
+
+// ── PREORDER ─────────────────────────────────────────────────────────────
+function renderPreorders(){
+  const grid=document.getElementById('preorderGrid');
+  const section=document.getElementById('shopPreorder');
+  if(!grid) return;
+  if(!preorderProducts.length){
+    section.style.display='none';
+    return;
+  }
+  section.style.display='';
+  grid.innerHTML=preorderProducts.map(p=>`
+    <div class="card" onclick="openPreorderModal(${p.id})">
+      <div class="card-img">
+        <span class="badge badge-preorder">PREORDER</span>
+        <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
+      </div>
+      <div class="card-body">
+        <div class="card-brand">${p.brand}</div>
+        <div class="card-name">${p.name}</div>
+        <div class="preorder-eta">📦 ETA: ${p.eta}</div>
+        <div class="card-footer">
+          <div>
+            ${p.retail?`<div style="font-size:11px;color:#aaa;text-decoration:line-through">RM ${p.retail}</div>`:''}
+            <div class="price">RM ${p.price}</div>
+          </div>
+          <button class="add-btn" onclick="event.stopPropagation();openPreorderModal(${p.id})">+</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+let currentPreorderId=null;
+
+function openPreorderModal(id){
+  const p=preorderProducts.find(x=>x.id===id);
+  if(!p) return;
+  currentPreorderId=id;
+  document.getElementById('preorderModalProduct').innerHTML=`
+    <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
+    <div>
+      <div class="card-brand">${p.brand}</div>
+      <div class="card-name" style="margin-bottom:2px">${p.name}</div>
+      <div style="font-size:13px;font-weight:700;color:#E63946">RM ${p.price}</div>
+    </div>
+  `;
+  document.getElementById('preorderDepositNote').textContent=
+    `Pay a refundable deposit of RM${p.deposit} now to reserve your pair. The remaining balance (RM${p.price-p.deposit}) will be collected when your shoe arrives — estimated ${p.eta}.`;
+  const sizeSel=document.getElementById('preorderSize');
+  sizeSel.innerHTML='<option value="">Select Size *</option>'+p.sizes.map(s=>`<option>${s}</option>`).join('');
+  document.getElementById('preorderName').value='';
+  document.getElementById('preorderPhone').value='';
+  document.getElementById('preorderEmail').value='';
+  document.getElementById('preorderAddress').value='';
+  const btn=document.getElementById('preorderSubmitBtn');
+  btn.textContent='Pay Deposit →';
+  btn.disabled=false;
+  document.getElementById('preorderModalOverlay').classList.add('open');
+}
+
+function closePreorderModal(e){
+  if(e && e.target.id!=='preorderModalOverlay' && e.type==='click') return;
+  document.getElementById('preorderModalOverlay').classList.remove('open');
+}
+
+async function submitPreorder(){
+  const p=preorderProducts.find(x=>x.id===currentPreorderId);
+  if(!p) return;
+  const size=document.getElementById('preorderSize').value;
+  const name=document.getElementById('preorderName').value.trim();
+  const phone=document.getElementById('preorderPhone').value.trim();
+  const email=document.getElementById('preorderEmail').value.trim();
+  const address=document.getElementById('preorderAddress').value.trim();
+
+  if(!size){showToast('Please select a size!','error');return;}
+  if(!name||!phone){showToast('Please fill in your name and WhatsApp number!','error');return;}
+  if(!address){showToast('Please fill in your shipping address!','error');return;}
+
+  const btn=document.getElementById('preorderSubmitBtn');
+  btn.textContent='Processing...';
+  btn.disabled=true;
+
+  const orderNum='PO'+Date.now().toString().slice(-6);
+
+  try{
+    const res=await fetch('/api/create-preorder-bill',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name,phone,
+        email:email||'noreply@kicklab.com',
+        deposit:p.deposit,
+        sku:p.sku,
+        productName:`${p.brand} ${p.name}`,
+        size,
+        eta:p.eta,
+        address,
+        orderNum,
+        redirect_url:window.location.origin,
+      }),
+    });
+    const data=await res.json();
+    if(data.payment_url){
+      window.location.href=data.payment_url;
+    }else{
+      showToast('Payment error. Please WhatsApp us for help!','error');
+      btn.textContent='Pay Deposit →';
+      btn.disabled=false;
+    }
+  }catch(e){
+    showToast('Payment error. Please WhatsApp us for help!','error');
+    btn.textContent='Pay Deposit →';
+    btn.disabled=false;
+  }
 }
 
 // ── REVIEWS ──────────────────────────────────────────────────────────────

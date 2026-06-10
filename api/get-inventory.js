@@ -4,7 +4,7 @@ export default async function handler(req, res) {
     const sheetId = process.env.GOOGLE_SHEETS_ID;
     const token = await getAccessToken(serviceAccount);
     const readRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:E`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Inventory!A:E`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     const data = await readRes.json();

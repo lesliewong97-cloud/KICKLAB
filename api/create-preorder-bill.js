@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, email, phone, deposit, sku, productName, size, eta, address, orderNum, redirect_url } = req.body;
+  const { name, email, phone, deposit, price, sku, productName, size, eta, address, orderNum, redirect_url } = req.body;
 
   const BILLPLZ_API_KEY = process.env.BILLPLZ_API_KEY;
   const BILLPLZ_COLLECTION_ID = process.env.BILLPLZ_COLLECTION_ID;
@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     orderNum ? `ORDER:${orderNum}` : '',
     `${productName} (${sku}) ${size}`,
     `ETA:${eta}`,
+    `PRICE:${price}`,
     address ? `Alamat: ${address}` : '',
   ].filter(Boolean).join(' | ');
 

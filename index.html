@@ -311,15 +311,6 @@ a.logo span{color:#E63946}
 .badge-preorder{background:#1A1A2E;color:#fff}
 .preorder-eta{font-size:11px;color:#E63946;font-weight:600;margin-bottom:6px}
 .preorder-empty{color:#aaa;font-size:14px;padding:2rem 0;text-align:center;grid-column:1/-1}
-.preorder-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center;padding:1rem}
-.preorder-modal-overlay.open{display:flex}
-.preorder-modal{background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:480px;display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow-y:auto}
-.preorder-modal-header{display:flex;justify-content:space-between;align-items:center}
-.preorder-modal-title{font-family:var(--font-head);font-size:20px;font-weight:700;color:#1A1A2E}
-.preorder-modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;line-height:1}
-.preorder-modal-product{display:flex;gap:12px;align-items:center;background:#f8f8f8;border-radius:10px;padding:10px}
-.preorder-modal-product img{width:64px;height:64px;object-fit:contain}
-.preorder-deposit-note{background:#fff8e1;color:#9a6b00;font-size:12px;border-radius:8px;padding:10px 12px;line-height:1.5}
 
 /* SIZE CHART MODAL */
 .sizechart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
@@ -467,24 +458,6 @@ a.logo span{color:#E63946}
     <input class="f-input" id="reviewName" placeholder="Your Name (optional)" style="margin:0">
     <textarea class="f-input" id="reviewMessage" rows="4" placeholder="Share your experience with KICKLAB..." style="resize:none;margin:0"></textarea>
     <button class="send-btn" onclick="submitReview()">Submit Review →</button>
-  </div>
-</div>
-
-<!-- PREORDER MODAL -->
-<div class="preorder-modal-overlay" id="preorderModalOverlay" onclick="closePreorderModal(event)">
-  <div class="preorder-modal">
-    <div class="preorder-modal-header">
-      <div class="preorder-modal-title">Preorder</div>
-      <button class="preorder-modal-close" onclick="closePreorderModal()">✕</button>
-    </div>
-    <div class="preorder-modal-product" id="preorderModalProduct"></div>
-    <div class="preorder-deposit-note" id="preorderDepositNote"></div>
-    <div id="preorderSizeDisplay" style="font-size:13px;font-weight:600;color:#1A1A2E;background:#f0f0f0;border-radius:8px;padding:10px 12px"></div>
-    <input class="f-input" id="preorderName" placeholder="Your Name *" style="margin:0">
-    <input class="f-input" id="preorderPhone" placeholder="WhatsApp Number *" style="margin:0">
-    <input class="f-input" id="preorderEmail" placeholder="Email (optional)" style="margin:0">
-    <textarea class="f-input" id="preorderAddress" rows="2" placeholder="Shipping Address *" style="resize:none;margin:0"></textarea>
-    <button class="send-btn" id="preorderSubmitBtn" onclick="submitPreorder()">Pay Deposit →</button>
   </div>
 </div>
 
@@ -648,7 +621,7 @@ const products=[
   {id:57,brand:'NIKE',name:"Dunk Low 'Panda'",slug:'nike-dunk-low-panda',price:249,retail:489,img:'DD1391-100.jpeg',cat:'sneakers',badge:'new',sku:'DD1391-100',colorway:'Black / White',desc:'The Nike Dunk Low "Panda" is one of the most iconic sneaker colourways of the modern era. A clean white leather base is contrasted by bold black overlays, creating the timeless black-and-white "Panda" look that became a global cultural phenomenon.',sizes:[{uk:'UK 9',stock:2,box:'full'},{uk:'UK 10',stock:1,box:'full'}]},
 ];
 
-// Preorder items — sold with a deposit, estimated ~2 weeks arrival
+// Preorder items — paid in full at checkout, estimated arrival per item's eta
 const preorderProducts=[
   {id:58,brand:'NIKE',name:"NikeCourt Air Zoom Vapor Pro 3 HC 'White Black'",slug:'nike-court-air-zoom-vapor-pro-3-hc-white-black',price:399,retail:649,deposit:50,img:'FZ2161-101.jpeg',cat:'tennis',sku:'FZ2161-101',colorway:'White / Black',eta:'2 weeks',isPreorder:true,desc:'The NikeCourt Air Zoom Vapor Pro 3 HC delivers explosive speed and stability for hard court play. A new rubber compound makes it lighter than previous Vapor models, while springy Air Zoom cushioning helps you stay locked in during fast side-to-side movements.',sizes:['UK 6','UK 6.5','UK 7','UK 7.5','UK 8','UK 8.5','UK 9','UK 9.5','UK 10']},
   {id:59,brand:'NIKE',name:"NikeCourt Air Zoom Vapor Pro 'White University Red'",slug:'nikecourt-air-zoom-vapor-pro-white-university-red',price:399,retail:649,deposit:50,img:'CZ0220-177.jpeg',cat:'tennis',sku:'CZ0220-177',colorway:'White / University Red',eta:'2 weeks',isPreorder:true,desc:'The NikeCourt Air Zoom Vapor Pro delivers explosive speed and stability for hard court play, with springy Air Zoom cushioning to keep you locked in during fast side-to-side movements.',sizes:['UK 7','UK 7.5','UK 8','UK 8.5','UK 9','UK 9.5','UK 10']},
@@ -905,91 +878,6 @@ function renderPreorders(){
       </div>
     </a>
   `).join('');
-}
-
-let currentPreorderId=null;
-
-function openPreorderModal(id){
-  const p=preorderProducts.find(x=>x.id===id);
-  if(!p) return;
-  if(!selectedSize){showToast('Please select a size first!','error');return;}
-  currentPreorderId=id;
-  document.getElementById('preorderModalProduct').innerHTML=`
-    <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
-    <div>
-      <div class="card-brand">${p.brand}</div>
-      <div class="card-name" style="margin-bottom:2px">${p.name}</div>
-      <div style="font-size:13px;font-weight:700;color:#E63946">RM ${p.price}</div>
-    </div>
-  `;
-  document.getElementById('preorderDepositNote').textContent=
-    `Pay a refundable deposit of RM${p.deposit} now to reserve your pair. The remaining balance (RM${p.price-p.deposit}) will be collected when your shoe arrives — estimated ${p.eta}.`;
-  document.getElementById('preorderSizeDisplay').textContent=`Size: ${selectedSize}`;
-  document.getElementById('preorderName').value='';
-  document.getElementById('preorderPhone').value='';
-  document.getElementById('preorderEmail').value='';
-  document.getElementById('preorderAddress').value='';
-  const btn=document.getElementById('preorderSubmitBtn');
-  btn.textContent='Pay Deposit →';
-  btn.disabled=false;
-  document.getElementById('preorderModalOverlay').classList.add('open');
-}
-
-function closePreorderModal(e){
-  if(e && e.target.id!=='preorderModalOverlay' && e.type==='click') return;
-  document.getElementById('preorderModalOverlay').classList.remove('open');
-}
-
-async function submitPreorder(){
-  const p=preorderProducts.find(x=>x.id===currentPreorderId);
-  if(!p) return;
-  const size=selectedSize;
-  const name=document.getElementById('preorderName').value.trim();
-  const phone=document.getElementById('preorderPhone').value.trim();
-  const email=document.getElementById('preorderEmail').value.trim();
-  const address=document.getElementById('preorderAddress').value.trim();
-
-  if(!size){showToast('Please select a size!','error');return;}
-  if(!name||!phone){showToast('Please fill in your name and WhatsApp number!','error');return;}
-  if(!address){showToast('Please fill in your shipping address!','error');return;}
-
-  const btn=document.getElementById('preorderSubmitBtn');
-  btn.textContent='Processing...';
-  btn.disabled=true;
-
-  const orderNum='PO'+Date.now().toString().slice(-6);
-
-  try{
-    const res=await fetch('/api/create-preorder-bill',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        name,phone,
-        email:email||'noreply@kicklab.com',
-        deposit:p.deposit,
-        price:p.price,
-        sku:p.sku,
-        productName:`${p.brand} ${p.name}`,
-        size,
-        eta:p.eta,
-        address,
-        orderNum,
-        redirect_url:window.location.origin,
-      }),
-    });
-    const data=await res.json();
-    if(data.payment_url){
-      window.location.href=data.payment_url;
-    }else{
-      showToast('Payment error. Please WhatsApp us for help!','error');
-      btn.textContent='Pay Deposit →';
-      btn.disabled=false;
-    }
-  }catch(e){
-    showToast('Payment error. Please WhatsApp us for help!','error');
-    btn.textContent='Pay Deposit →';
-    btn.disabled=false;
-  }
 }
 
 // ── REVIEWS ──────────────────────────────────────────────────────────────
@@ -1312,9 +1200,7 @@ function openProduct(id, skipHistory=false){
           </div>
           <div style="padding:0 12px 12px"><svg width="100%" viewBox="0 0 680 360" role="img"><title>Full box vs half box</title><desc>Comparison</desc><text x="180" y="48" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="15" font-weight="600" fill="#1A1A2E">Full box</text><text x="180" y="66" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" fill="#888">Lid intact</text><rect x="72" y="82" width="216" height="50" rx="4" fill="#2d2d4e"/><rect x="80" y="128" width="200" height="10" rx="2" fill="#2d2d4e"/><rect x="80" y="136" width="200" height="110" rx="4" fill="#1A1A2E"/><rect x="80" y="168" width="200" height="28" fill="#E63946"/><text x="180" y="187" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#fff">KICKLAB</text><circle cx="180" cy="272" r="14" fill="#e8faf0" stroke="#25a244" stroke-width="0.5"/><text x="180" y="277" text-anchor="middle" font-size="14" fill="#25a244">✓</text><text x="180" y="300" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#25a244">Original price</text><line x1="340" y1="40" x2="340" y2="320" stroke="#eee" stroke-width="0.5" stroke-dasharray="4 4"/><text x="340" y="34" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#bbb">vs</text><text x="500" y="48" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="15" font-weight="600" fill="#1A1A2E">Half box</text><text x="500" y="66" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" fill="#888">Lid trimmed off</text><rect x="392" y="82" width="216" height="50" rx="4" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="5 3"/><text x="500" y="112" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#f59e0b">lid removed</text><text x="616" y="118" text-anchor="middle" font-size="15" fill="#f59e0b">✂</text><polyline points="400,136 418,124 438,134 458,122 478,133 498,121 518,133 538,122 558,133 578,123 600,134" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="400" y="134" width="200" height="112" rx="4" fill="#1A1A2E"/><rect x="400" y="168" width="200" height="28" fill="#E63946"/><text x="500" y="187" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#fff">KICKLAB</text><rect x="466" y="258" width="68" height="26" rx="13" fill="#fff8e1" stroke="#f59e0b" stroke-width="0.5"/><text x="500" y="275" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#b45309">- RM 10</text><text x="500" y="300" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#f59e0b">Discounted</text><rect x="60" y="320" width="560" height="28" rx="6" fill="#f8f8f8"/><text x="340" y="338" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#888">Shoes are brand new and unworn regardless of box condition</text></svg></div>
         </details>`}
-        ${p.isPreorder?`<div class="preorder-deposit-note" style="margin-bottom:.75rem">Pay a refundable deposit of RM${p.deposit} now to reserve your pair. The remaining balance (RM${p.price-p.deposit}) will be collected when your shoe arrives — estimated ${p.eta}.</div>
-        <button class="detail-add-btn" onclick="openPreorderModal(${p.id})">Pay Deposit RM${p.deposit} →</button>`:
-        `<button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>`}
+        <button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>
         <a class="detail-wa-btn" href="https://wa.me/60102347825?text=Hi%2C+I+would+like+to+enquire+about+${encodeURIComponent(p.name)}+(${p.sku})" target="_blank" style="text-decoration:none">💬 WhatsApp Us</a>
         <div class="detail-desc"><h4>Product Description</h4><p>${p.desc}</p></div>
       </div>
@@ -1493,7 +1379,7 @@ function showToast(msg, type='success'){
 }
 
 function addFromDetail(id){
-  const p=products.find(x=>x.id===id);
+  const p=products.find(x=>x.id===id)||preorderProducts.find(x=>x.id===id);
   if(p.sizes&&p.sizes.length>0&&!selectedSize){showToast('Please select a size first!','error');return;}
   const finalPrice=selectedPrice||p.price;
   const key=id+'-'+(selectedSize||'tbd')+'-'+(selectedBox||'full');
@@ -1590,7 +1476,7 @@ function renderCart(step=1){
             <div class="item-name">${i.brand} ${i.name}</div>
             <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;align-items:center">
               ${i.size?`<span style="background:#f0f0f0;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600">${i.size.startsWith('UK')?i.size:'UK '+i.size}</span>`:''}
-              ${i.box?`<span style="background:${i.box==='half'?'#fff8e1':'#e8faf0'};color:${i.box==='half'?'#f59e0b':'#25a244'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600">${i.box==='half'?'Half Box':'Full Box'}</span>`:''}
+              ${i.isPreorder?`<span style="background:#1A1A2E;color:#fff;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600">📦 Preorder · ETA ${i.eta}</span>`:i.box?`<span style="background:${i.box==='half'?'#fff8e1':'#e8faf0'};color:${i.box==='half'?'#f59e0b':'#25a244'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600">${i.box==='half'?'Half Box':'Full Box'}</span>`:''}
               <div style="display:flex;align-items:center;gap:6px;background:#f0f0f0;border-radius:20px;padding:2px 6px">
                 <button onclick="changeQty('${i.key}',-1)" style="background:none;border:none;cursor:pointer;font-size:16px;font-weight:700;color:#1A1A2E;padding:0 2px;line-height:1">−</button>
                 <span style="font-size:12px;font-weight:600;min-width:16px;text-align:center">${i.qty}</span>
@@ -1687,6 +1573,8 @@ async function checkout(total){
     box:i.box||null,
     qty:i.qty,
     price:i.price,
+    isPreorder:!!i.isPreorder,
+    eta:i.eta||null,
   }));
 
   const btn=document.querySelector('.checkout-btn');

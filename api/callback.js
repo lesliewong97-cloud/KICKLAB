@@ -67,6 +67,7 @@ export default async function handler(req, res) {
     await Promise.all([
       items.length > 0 ? updateInventory(items) : Promise.resolve(),
       sendOrderEmail(bill, description, orderNum, address, shippingFee, items),
+      markOrderPaid(orderNum),
     ]);
 
     return res.redirect(302, '/?payment=success');
@@ -408,6 +409,34 @@ async function sendPreorderEmail({ orderNum, bill, sku, productName, size, depos
   });
 
   console.log('Preorder email sent to', EMAIL_USER);
+}
+
+async function markOrderPaid(orderNum) {
+  if (!orderNum || orderNum === 'N/A') return;
+  const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+  const sheetId = process.env.GOOGLE_SHEETS_ID;
+  const token = await getAccessToken(serviceAccount);
+
+  const readRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Orders!A:L`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  const data = await readRes.json();
+  const rows = data.values || [];
+
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][1] === orderNum) {
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Orders!L${i + 1}?valueInputOption=RAW`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [['Paid']] }),
+        }
+      );
+      return;
+    }
+  }
 }
 
 async function updateInventory(items) {

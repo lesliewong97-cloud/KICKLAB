@@ -479,7 +479,7 @@ a.logo span{color:#E63946}
     </div>
     <div class="preorder-modal-product" id="preorderModalProduct"></div>
     <div class="preorder-deposit-note" id="preorderDepositNote"></div>
-    <select class="f-input" id="preorderSize" style="margin:0"></select>
+    <div id="preorderSizeDisplay" style="font-size:13px;font-weight:600;color:#1A1A2E;background:#f0f0f0;border-radius:8px;padding:10px 12px"></div>
     <input class="f-input" id="preorderName" placeholder="Your Name *" style="margin:0">
     <input class="f-input" id="preorderPhone" placeholder="WhatsApp Number *" style="margin:0">
     <input class="f-input" id="preorderEmail" placeholder="Email (optional)" style="margin:0">
@@ -637,7 +637,7 @@ const products=[
 
 // Preorder items — sold with a deposit, estimated ~2 weeks arrival
 const preorderProducts=[
-  {id:58,brand:'NIKE',name:"NikeCourt Air Zoom Vapor Pro 3 HC 'White Black'",price:399,retail:649,deposit:50,img:'FZ2161-101.jpeg',sku:'FZ2161-101',colorway:'White / Black',eta:'2 weeks',sizes:['UK 6','UK 6.5','UK 7','UK 7.5','UK 8','UK 8.5','UK 9','UK 9.5','UK 10']},
+  {id:58,brand:'NIKE',name:"NikeCourt Air Zoom Vapor Pro 3 HC 'White Black'",slug:'nike-court-air-zoom-vapor-pro-3-hc-white-black',price:399,retail:649,deposit:50,img:'FZ2161-101.jpeg',cat:'tennis',sku:'FZ2161-101',colorway:'White / Black',eta:'2 weeks',isPreorder:true,desc:'The NikeCourt Air Zoom Vapor Pro 3 HC delivers explosive speed and stability for hard court play. A new rubber compound makes it lighter than previous Vapor models, while springy Air Zoom cushioning helps you stay locked in during fast side-to-side movements.',sizes:['UK 6','UK 6.5','UK 7','UK 7.5','UK 8','UK 8.5','UK 9','UK 9.5','UK 10']},
 ];
 
 const categories=[
@@ -866,7 +866,7 @@ function renderPreorders(){
   }
   section.style.display='';
   grid.innerHTML=preorderProducts.map(p=>`
-    <div class="card" onclick="openPreorderModal(${p.id})">
+    <a class="card" href="/#${p.slug}" onclick="event.preventDefault();openProduct(${p.id})">
       <div class="card-img">
         <span class="badge badge-preorder">PREORDER</span>
         <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
@@ -880,10 +880,9 @@ function renderPreorders(){
             ${p.retail?`<div style="font-size:11px;color:#aaa;text-decoration:line-through">RM ${p.retail}</div>`:''}
             <div class="price">RM ${p.price}</div>
           </div>
-          <button class="add-btn" onclick="event.stopPropagation();openPreorderModal(${p.id})">+</button>
         </div>
       </div>
-    </div>
+    </a>
   `).join('');
 }
 
@@ -892,6 +891,7 @@ let currentPreorderId=null;
 function openPreorderModal(id){
   const p=preorderProducts.find(x=>x.id===id);
   if(!p) return;
+  if(!selectedSize){showToast('Please select a size first!','error');return;}
   currentPreorderId=id;
   document.getElementById('preorderModalProduct').innerHTML=`
     <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
@@ -903,8 +903,7 @@ function openPreorderModal(id){
   `;
   document.getElementById('preorderDepositNote').textContent=
     `Pay a refundable deposit of RM${p.deposit} now to reserve your pair. The remaining balance (RM${p.price-p.deposit}) will be collected when your shoe arrives — estimated ${p.eta}.`;
-  const sizeSel=document.getElementById('preorderSize');
-  sizeSel.innerHTML='<option value="">Select Size *</option>'+p.sizes.map(s=>`<option>${s}</option>`).join('');
+  document.getElementById('preorderSizeDisplay').textContent=`Size: ${selectedSize}`;
   document.getElementById('preorderName').value='';
   document.getElementById('preorderPhone').value='';
   document.getElementById('preorderEmail').value='';
@@ -923,7 +922,7 @@ function closePreorderModal(e){
 async function submitPreorder(){
   const p=preorderProducts.find(x=>x.id===currentPreorderId);
   if(!p) return;
-  const size=document.getElementById('preorderSize').value;
+  const size=selectedSize;
   const name=document.getElementById('preorderName').value.trim();
   const phone=document.getElementById('preorderPhone').value.trim();
   const email=document.getElementById('preorderEmail').value.trim();
@@ -1159,11 +1158,12 @@ function checkThumbStrip(){
 }
 
 function openProduct(id, skipHistory=false){
-  const p=products.find(x=>x.id===id);
+  const p=products.find(x=>x.id===id)||preorderProducts.find(x=>x.id===id);
   selectedSize=null;
   selectedBox=null;
   selectedPrice=null;
   currentProductId=id;
+  currentIsPreorder=!!(p&&p.isPreorder);
   // Save scroll position from whichever page we're on
   sessionStorage.setItem('scrollPos', window.scrollY);
 
@@ -1238,16 +1238,18 @@ function openProduct(id, skipHistory=false){
         })()}
       </div>
       <div class="detail-info">
+        ${p.isPreorder?`<div style="margin-bottom:8px"><span class="badge badge-preorder" style="position:static;display:inline-block">PREORDER</span> <span class="preorder-eta" style="display:inline-block;margin-left:6px">📦 ETA: ${p.eta}</span></div>`:''}
         <div class="detail-brand">${p.brand}</div>
         <div class="detail-name">${p.name}</div>
         <div class="detail-sku">SKU: ${p.sku}</div>
         <div class="detail-colorway">${p.colorway}</div>
         <div class="detail-price" id="detailPriceDisplay">RM ${p.price} <span>/ pairs</span></div>
         ${p.retail?`<div style="font-size:13px;color:#888;margin-top:-12px;margin-bottom:1.5rem">Retail: <span style="text-decoration:line-through">RM ${p.retail}</span> &nbsp;·&nbsp; <span style="color:#25a244;font-weight:600">Save RM ${p.retail-p.price} (${Math.round((p.retail-p.price)/p.retail*100)}% off)</span></div>`:''}
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><div style="font-size:12px;font-weight:600;letter-spacing:.5px">Select Size (UK)</div><button class="size-guide-link" onclick="openSizeChart(${p.id})">📏 Size Guide</button></div>
-        
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><div style="font-size:12px;font-weight:600;letter-spacing:.5px">Select Size (UK)</div>${p.isPreorder?'':`<button class="size-guide-link" onclick="openSizeChart(${p.id})">📏 Size Guide</button>`}</div>
+
         <div class="sizes" style="display:block">
-          ${p.sizes&&p.sizes.length>0?(()=>{
+          ${p.isPreorder?`<div style="display:flex;flex-wrap:wrap;gap:8px">${p.sizes.map(s=>`<button class="size-btn" onclick="selectSize(this,'${s}','preorder',${p.price})"><span style="font-size:13px;font-weight:700;color:inherit">${s}</span></button>`).join('')}</div>`:
+          p.sizes&&p.sizes.length>0?(()=>{
             const fullSizes=p.sizes.filter(s=>s.box==='full');
             const halfSizes=p.sizes.filter(s=>s.box==='half');
             const fullPrice=p.price;
@@ -1281,14 +1283,16 @@ function openProduct(id, skipHistory=false){
             return html;
           })():`<div style="font-size:13px;color:#888">${p.sizeNote||'Sizes coming soon'}</div>`}
         </div>
-        <details id="boxExplainer" style="margin-bottom:.75rem;border:1px solid #eee;border-radius:10px;overflow:hidden">
+        ${p.isPreorder?'':`<details id="boxExplainer" style="margin-bottom:.75rem;border:1px solid #eee;border-radius:10px;overflow:hidden">
           <summary style="display:none"></summary>
           <div style="padding:12px 16px;font-size:12px;color:#666;line-height:1.7">
             Some shoes come with the box lid trimmed — a common practice for outlet or clearance stock. The shoes inside are <strong>brand new and unworn</strong>. Half box items are sold at <strong style="color:#f59e0b">RM10 off</strong>.
           </div>
           <div style="padding:0 12px 12px"><svg width="100%" viewBox="0 0 680 360" role="img"><title>Full box vs half box</title><desc>Comparison</desc><text x="180" y="48" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="15" font-weight="600" fill="#1A1A2E">Full box</text><text x="180" y="66" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" fill="#888">Lid intact</text><rect x="72" y="82" width="216" height="50" rx="4" fill="#2d2d4e"/><rect x="80" y="128" width="200" height="10" rx="2" fill="#2d2d4e"/><rect x="80" y="136" width="200" height="110" rx="4" fill="#1A1A2E"/><rect x="80" y="168" width="200" height="28" fill="#E63946"/><text x="180" y="187" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#fff">KICKLAB</text><circle cx="180" cy="272" r="14" fill="#e8faf0" stroke="#25a244" stroke-width="0.5"/><text x="180" y="277" text-anchor="middle" font-size="14" fill="#25a244">✓</text><text x="180" y="300" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#25a244">Original price</text><line x1="340" y1="40" x2="340" y2="320" stroke="#eee" stroke-width="0.5" stroke-dasharray="4 4"/><text x="340" y="34" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#bbb">vs</text><text x="500" y="48" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="15" font-weight="600" fill="#1A1A2E">Half box</text><text x="500" y="66" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" fill="#888">Lid trimmed off</text><rect x="392" y="82" width="216" height="50" rx="4" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="5 3"/><text x="500" y="112" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#f59e0b">lid removed</text><text x="616" y="118" text-anchor="middle" font-size="15" fill="#f59e0b">✂</text><polyline points="400,136 418,124 438,134 458,122 478,133 498,121 518,133 538,122 558,133 578,123 600,134" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><rect x="400" y="134" width="200" height="112" rx="4" fill="#1A1A2E"/><rect x="400" y="168" width="200" height="28" fill="#E63946"/><text x="500" y="187" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#fff">KICKLAB</text><rect x="466" y="258" width="68" height="26" rx="13" fill="#fff8e1" stroke="#f59e0b" stroke-width="0.5"/><text x="500" y="275" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#b45309">- RM 10</text><text x="500" y="300" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#f59e0b">Discounted</text><rect x="60" y="320" width="560" height="28" rx="6" fill="#f8f8f8"/><text x="340" y="338" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="11" fill="#888">Shoes are brand new and unworn regardless of box condition</text></svg></div>
-        </details>
-<button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>
+        </details>`}
+        ${p.isPreorder?`<div class="preorder-deposit-note" style="margin-bottom:.75rem">Pay a refundable deposit of RM${p.deposit} now to reserve your pair. The remaining balance (RM${p.price-p.deposit}) will be collected when your shoe arrives — estimated ${p.eta}.</div>
+        <button class="detail-add-btn" onclick="openPreorderModal(${p.id})">Pay Deposit RM${p.deposit} →</button>`:
+        `<button class="detail-add-btn" onclick="addFromDetail(${p.id})">Add to Cart</button>`}
         <a class="detail-wa-btn" href="https://wa.me/60102347825?text=Hi%2C+I+would+like+to+enquire+about+${encodeURIComponent(p.name)}+(${p.sku})" target="_blank" style="text-decoration:none">💬 WhatsApp Us</a>
         <div class="detail-desc"><h4>Product Description</h4><p>${p.desc}</p></div>
       </div>
@@ -1309,7 +1313,7 @@ function showPage(name, link, restoreScroll=false){
   } else {
     window.scrollTo(0,0);
   }
-  const p=products.find(x=>x.id===currentProductId);
+  const p=products.find(x=>x.id===currentProductId)||preorderProducts.find(x=>x.id===currentProductId);
   const url=name==='shop'?'/':name==='detail'?`/#${p?p.slug:'product'}`:`/#${name}`;
   if(name==='shop'){
     history.replaceState({page:'shop'},'','/');
@@ -1319,6 +1323,7 @@ function showPage(name, link, restoreScroll=false){
 }
 
 let currentProductId=null;
+let currentIsPreorder=false;
 
 window.addEventListener('popstate',function(e){
   const page=e.state?e.state.page:'shop';
@@ -1366,7 +1371,7 @@ window.addEventListener('DOMContentLoaded',function(){
   }else if(categories.find(c=>c.id===hash)){
     openCategory(hash, true);
   }else{
-    const p=products.find(x=>x.slug===hash||x.id===parseInt(hash.replace('product-','')));
+    const p=products.find(x=>x.slug===hash||x.id===parseInt(hash.replace('product-','')))||preorderProducts.find(x=>x.slug===hash);
     if(p) openProduct(p.id,true);
   }
 });
@@ -1380,7 +1385,7 @@ function selectSize(btn,size,box,price){
   // Update price display
   const priceEl=document.getElementById('detailPriceDisplay');
   if(priceEl&&price){
-    const boxLabel=box==='half'?' <span style="font-size:13px;color:#f59e0b;font-weight:600">· Half Box (-RM10)</span>':'<span style="font-size:13px;color:#25a244;font-weight:600"> · Full Box</span>';
+    const boxLabel=box==='preorder'?'':box==='half'?' <span style="font-size:13px;color:#f59e0b;font-weight:600">· Half Box (-RM10)</span>':'<span style="font-size:13px;color:#25a244;font-weight:600"> · Full Box</span>';
     priceEl.innerHTML='RM '+price+' <span>/ pairs</span>'+boxLabel;
   }
 }

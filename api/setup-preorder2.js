@@ -1,0 +1,56 @@
+export default async function handler(req, res) {
+  try {
+    const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+    const sheetId = '1Unm3WjHSswhXAzwjN8lNNGRf38By_X41lSHnhIOsU0c';
+    const token = await getAccessToken(serviceAccount);
+
+    // Update header row with new column layout
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Preorder!A1:M1?valueInputOption=RAW`,
+      {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          values: [[
+            'Timestamp', 'Order Number', 'Customer Name', 'Phone', 'Email',
+            'SKU', 'Product', 'Size', 'Deposit Paid (RM)', 'Full Price (RM)',
+            'Shipping Address', 'ETA', 'Status'
+          ]],
+        }),
+      }
+    );
+
+    return res.status(200).json({ message: 'Preorder sheet header updated!' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message, stack: err.stack });
+  }
+}
+
+async function getAccessToken(serviceAccount) {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const payload = {
+    iss: serviceAccount.client_email,
+    scope: 'https://www.googleapis.com/auth/spreadsheets',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600,
+  };
+  const encode = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const unsignedToken = `${encode(header)}.${encode(payload)}`;
+  const { createSign } = await import('crypto');
+  const sign = createSign('RSA-SHA256');
+  sign.update(unsignedToken);
+  const signature = sign.sign(serviceAccount.private_key, 'base64url');
+  const jwt = `${unsignedToken}.${signature}`;
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt,
+    }),
+  });
+  const tokenData = await tokenRes.json();
+  return tokenData.access_token;
+}

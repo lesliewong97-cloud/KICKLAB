@@ -28,6 +28,7 @@ export default async function handler(req, res) {
     if (description.startsWith('PREORDER')) {
       const orderNum = (description.match(/ORDER:([A-Z0-9]+)/) || [])[1] || 'N/A';
       const eta = (description.match(/ETA:([^|]+)/) || [])[1]?.trim() || '';
+      const price = (description.match(/PRICE:([\d.]+)/) || [])[1] || '0';
       const address = (description.match(/Alamat: ([^|]+)/) || [])[1]?.trim() || '';
       const itemPart = (description.match(/\|\s*(.+?\([A-Z0-9-]+\)\s*UK[\d.]+)\s*\|/) || [])[1]?.trim() || '';
       const skuMatch = itemPart.match(/\(([A-Z0-9-]+)\)/);
@@ -38,8 +39,20 @@ export default async function handler(req, res) {
       const deposit = (parseInt(bill.paid_amount || bill.amount) / 100).toFixed(2);
 
       await Promise.all([
-        recordPreorder({ orderNum, bill, sku, productName, size, deposit, address, eta }),
+        recordPreorder({ orderNum, bill, sku, productName, size, deposit, price, address, eta }),
         sendPreorderEmail({ orderNum, bill, sku, productName, size, deposit, address, eta }),
+      ]);
+
+      return res.redirect(302, '/?payment=success');
+    }
+
+    if (description.startsWith('BALANCE')) {
+      const orderNum = (description.match(/ORDER:([A-Z0-9]+)/) || [])[1] || 'N/A';
+      const amount = (parseInt(bill.paid_amount || bill.amount) / 100).toFixed(2);
+
+      await Promise.all([
+        markPreorderPaid(orderNum),
+        sendBalancePaidEmail({ orderNum, bill, amount }),
       ]);
 
       return res.redirect(302, '/?payment=success');
@@ -207,7 +220,7 @@ async function sendOrderEmail(bill, description, orderNum, address, shippingFee,
   console.log('Order email sent to', EMAIL_USER);
 }
 
-async function recordPreorder({ orderNum, bill, sku, productName, size, deposit, address, eta }) {
+async function recordPreorder({ orderNum, bill, sku, productName, size, deposit, price, address, eta }) {
   const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
   const sheetId = process.env.GOOGLE_SHEETS_ID;
   const token = await getAccessToken(serviceAccount);
@@ -215,18 +228,110 @@ async function recordPreorder({ orderNum, bill, sku, productName, size, deposit,
   const timestamp = new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' });
 
   await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Preorder!A:K:append?valueInputOption=RAW`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Preorder!A:M:append?valueInputOption=RAW`,
     {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         values: [[
           timestamp, orderNum, bill.name, bill.mobile, bill.email,
-          sku, productName, size, deposit, address, `ETA ${eta} - Pending`
+          sku, productName, size, deposit, price, address, eta, 'Pending Arrival'
         ]],
       }),
     }
   );
+}
+
+async function markPreorderPaid(orderNum) {
+  const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+  const sheetId = process.env.GOOGLE_SHEETS_ID;
+  const token = await getAccessToken(serviceAccount);
+
+  const readRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Preorder!A:M`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  const data = await readRes.json();
+  const rows = data.values || [];
+
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][1] === orderNum) {
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Preorder!M${i + 1}?valueInputOption=RAW`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values: [['Paid - Ready to Ship']] }),
+        }
+      );
+      return rows[i];
+    }
+  }
+  return null;
+}
+
+async function sendBalancePaidEmail({ orderNum, bill, amount }) {
+  const EMAIL_USER = process.env.EMAIL_USER;
+  const EMAIL_PASS = process.env.EMAIL_PASS;
+  if (!EMAIL_USER || !EMAIL_PASS) return;
+
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+  });
+
+  await transporter.sendMail({
+    from: `"KICKLAB" <${EMAIL_USER}>`,
+    to: EMAIL_USER,
+    subject: `✅ Balance Paid #${orderNum} - RM${amount} | ${bill.name}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif">
+  <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+    <div style="background:#1A1A2E;padding:28px 32px;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:26px;letter-spacing:3px">KICK<span style="color:#E63946">LAB</span></h1>
+      <p style="color:rgba(255,255,255,0.5);margin:6px 0 0;font-size:13px;letter-spacing:1px">PREORDER BALANCE PAID</p>
+    </div>
+    <div style="background:#2ecc71;padding:20px 32px">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <p style="color:rgba(255,255,255,0.85);margin:0 0 2px;font-size:11px;letter-spacing:1px">ORDER NUMBER</p>
+            <p style="color:#fff;margin:0;font-size:22px;font-weight:700">#${orderNum}</p>
+          </td>
+          <td style="text-align:right">
+            <p style="color:rgba(255,255,255,0.85);margin:0 0 2px;font-size:11px;letter-spacing:1px">BALANCE PAID</p>
+            <p style="color:#fff;margin:0;font-size:28px;font-weight:700">RM${amount}</p>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div style="padding:28px 32px">
+      <div style="margin-bottom:24px">
+        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">CUSTOMER</p>
+        <div style="background:#f8f8f8;border-radius:8px;padding:14px 16px">
+          <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#1A1A2E">${bill.name}</p>
+          <p style="margin:0 0 3px;font-size:13px;color:#666">📱 ${bill.mobile}</p>
+          <p style="margin:0;font-size:13px;color:#666">✉️ ${bill.email}</p>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:14px;font-weight:700;color:#2ecc71;margin:0">Status: Paid - Ready to Ship 📦</p>
+      <p style="text-align:center;font-size:11px;color:#ccc;margin-top:20px">Bill ID: ${bill.id}</p>
+    </div>
+    <div style="background:#f8f8f8;padding:16px 32px;text-align:center">
+      <p style="margin:0;font-size:12px;color:#aaa">KICKLAB · kicklab.com.my</p>
+    </div>
+  </div>
+</body>
+</html>
+    `,
+  });
+
+  console.log('Balance paid email sent to', EMAIL_USER);
 }
 
 async function sendPreorderEmail({ orderNum, bill, sku, productName, size, deposit, address, eta }) {

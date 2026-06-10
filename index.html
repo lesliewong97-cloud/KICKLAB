@@ -1085,7 +1085,7 @@ async function submitReview() {
       body:JSON.stringify({name, rating:selectedRating, message}),
     });
     closeReviewModal();
-    showToast('Thanks for your review! It will be published after approval 🙏');
+    showToast('Thanks for your review! 🙏');
   } catch(e) {
     showToast('Something went wrong, please try again');
   }

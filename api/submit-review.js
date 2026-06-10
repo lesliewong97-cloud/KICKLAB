@@ -12,7 +12,7 @@ export default async function handler(req, res) {
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ values: [[name || 'Anonymous', rating, message, date, 'pending']] }),
+        body: JSON.stringify({ values: [[name || 'Anonymous', rating, message, date, 'approved']] }),
       }
     );
     return res.status(200).json({ message: 'Review submitted!' });

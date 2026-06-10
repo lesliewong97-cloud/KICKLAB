@@ -1267,7 +1267,7 @@ function openProduct(id, skipHistory=false){
         <div class="detail-colorway">${p.colorway}</div>
         <div class="detail-price" id="detailPriceDisplay">RM ${p.price} <span>/ pairs</span></div>
         ${p.retail?`<div style="font-size:13px;color:#888;margin-top:-12px;margin-bottom:1.5rem">Retail: <span style="text-decoration:line-through">RM ${p.retail}</span> &nbsp;·&nbsp; <span style="color:#25a244;font-weight:600">Save RM ${p.retail-p.price} (${Math.round((p.retail-p.price)/p.retail*100)}% off)</span></div>`:''}
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><div style="font-size:12px;font-weight:600;letter-spacing:.5px">Select Size (UK)</div>${p.isPreorder?'':`<button class="size-guide-link" onclick="openSizeChart(${p.id})">📏 Size Guide</button>`}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><div style="font-size:12px;font-weight:600;letter-spacing:.5px">Select Size (UK)</div><button class="size-guide-link" onclick="openSizeChart(${p.id})">📏 Size Guide</button></div>
 
         <div class="sizes" style="display:block">
           ${p.isPreorder?`<div style="display:flex;flex-wrap:wrap;gap:8px">${p.sizes.map(s=>`<button class="size-btn" onclick="selectSize(this,'${s}','preorder',${p.price})"><span style="font-size:13px;font-weight:700;color:inherit">${s}</span></button>`).join('')}</div>`:
@@ -1783,20 +1783,35 @@ const sizeTips={
 };
 
 function openSizeChart(productId){
-  const p=products.find(x=>x.id===productId);
+  const p=products.find(x=>x.id===productId)||preorderProducts.find(x=>x.id===productId);
   if(!p) return;
   const tbody=document.getElementById('sizeChartBody');
   const tip=document.getElementById('sizeChartTip');
-  
-  tbody.innerHTML=sizeData.map(row=>{
-    const sizeInfo=p.sizes?p.sizes.find(s=>s.uk===row.uk):null;
-    const stock=sizeInfo?sizeInfo.stock:0;
-    let rowClass='out-stock';
-    let stockLabel='<span class="sizechart-stock-dot dot-out"></span>Sold out';
-    if(stock===1){rowClass='last-pair';stockLabel='<span class="sizechart-stock-dot dot-last"></span>Last pair';}
-    else if(stock>1){rowClass='in-stock';stockLabel='<span class="sizechart-stock-dot dot-available"></span>'+stock+' pairs';}
-    return '<tr class="'+rowClass+'"><td>'+row.uk+'</td><td>'+row.us+'</td><td>'+row.eu+'</td><td>'+row.cm+' cm</td><td>'+stockLabel+'</td></tr>';
-  }).join('');
+  const legend=document.getElementById('sizeChartLegend');
+  const stockHeader=document.getElementById('sizeChartStockHeader');
+
+  if(p.isPreorder){
+    stockHeader.textContent='Availability';
+    legend.innerHTML='<span><span class="sizechart-stock-dot dot-available"></span>Available for preorder</span><span><span class="sizechart-stock-dot dot-out"></span>Not available</span>';
+    tbody.innerHTML=sizeData.map(row=>{
+      const available=p.sizes&&p.sizes.includes(row.uk);
+      const rowClass=available?'in-stock':'out-stock';
+      const stockLabel=available?'<span class="sizechart-stock-dot dot-available"></span>Available':'<span class="sizechart-stock-dot dot-out"></span>Not available';
+      return '<tr class="'+rowClass+'"><td>'+row.uk+'</td><td>'+row.us+'</td><td>'+row.eu+'</td><td>'+row.cm+' cm</td><td>'+stockLabel+'</td></tr>';
+    }).join('');
+  }else{
+    stockHeader.textContent='Stock';
+    legend.innerHTML='<span><span class="sizechart-stock-dot dot-available"></span>Available</span><span><span class="sizechart-stock-dot dot-last"></span>Last pair</span><span><span class="sizechart-stock-dot dot-out"></span>Sold out</span>';
+    tbody.innerHTML=sizeData.map(row=>{
+      const sizeInfo=p.sizes?p.sizes.find(s=>s.uk===row.uk):null;
+      const stock=sizeInfo?sizeInfo.stock:0;
+      let rowClass='out-stock';
+      let stockLabel='<span class="sizechart-stock-dot dot-out"></span>Sold out';
+      if(stock===1){rowClass='last-pair';stockLabel='<span class="sizechart-stock-dot dot-last"></span>Last pair';}
+      else if(stock>1){rowClass='in-stock';stockLabel='<span class="sizechart-stock-dot dot-available"></span>'+stock+' pairs';}
+      return '<tr class="'+rowClass+'"><td>'+row.uk+'</td><td>'+row.us+'</td><td>'+row.eu+'</td><td>'+row.cm+' cm</td><td>'+stockLabel+'</td></tr>';
+    }).join('');
+  }
 
   const brandTip=sizeTips[p.brand]||'Refer to CM measurement for most accurate sizing.';
   tip.innerHTML='<strong>Fit Tip · '+p.brand+'</strong><br>'+brandTip;
@@ -2003,7 +2018,7 @@ async function notifyCustomer(orderNum,btn){
       <div class="sizechart-title">📏 Size Guide</div>
       <button class="close-btn" onclick="document.getElementById('sizeChartOverlay').classList.remove('open')">✕</button>
     </div>
-    <div class="sizechart-legend">
+    <div class="sizechart-legend" id="sizeChartLegend">
       <span><span class="sizechart-stock-dot dot-available"></span>Available</span>
       <span><span class="sizechart-stock-dot dot-last"></span>Last pair</span>
       <span><span class="sizechart-stock-dot dot-out"></span>Sold out</span>
@@ -2016,7 +2031,7 @@ async function notifyCustomer(orderNum,btn){
             <th>US (M)</th>
             <th>EU</th>
             <th>CM</th>
-            <th>Stock</th>
+            <th id="sizeChartStockHeader">Stock</th>
           </tr>
         </thead>
         <tbody id="sizeChartBody"></tbody>

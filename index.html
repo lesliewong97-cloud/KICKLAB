@@ -1273,7 +1273,12 @@ window.addEventListener('DOMContentLoaded',function(){
   const params=new URLSearchParams(window.location.search);
   if(params.get('payment')==='success'){
     history.replaceState({},'','/');
-    showSuccess();
+    if(params.get('billplz[paid]')==='true'){
+      showSuccess();
+    }else{
+      sessionStorage.removeItem('lastOrder');
+      showToast('Payment was not completed.','error');
+    }
     return;
   }
   const hash=window.location.hash.replace('#','');
@@ -2042,8 +2047,14 @@ async function loadInventory(){
 const _params=new URLSearchParams(window.location.search);
 if(_params.get('payment')==='success'){
   history.replaceState({},'','/');
-  document.addEventListener('DOMContentLoaded',()=>showSuccess());
-  if(document.readyState!=='loading') showSuccess();
+  if(_params.get('billplz[paid]')==='true'){
+    document.addEventListener('DOMContentLoaded',()=>showSuccess());
+    if(document.readyState!=='loading') showSuccess();
+  }else{
+    sessionStorage.removeItem('lastOrder');
+    document.addEventListener('DOMContentLoaded',()=>showToast('Payment was not completed.','error'));
+    if(document.readyState!=='loading') showToast('Payment was not completed.','error');
+  }
 } else {
   document.addEventListener('DOMContentLoaded',function(){
     const hash=window.location.hash.replace('#','');

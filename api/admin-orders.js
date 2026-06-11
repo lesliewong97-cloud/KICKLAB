@@ -23,6 +23,7 @@ export default async function handler(req, res) {
       for (let i = 1; i < rows.length; i++) {
         const r = rows[i];
         if (!r[1]) continue;
+        if ((r[11] || '') === 'Pending Payment') continue;
         let items = [];
         try { items = JSON.parse(r[6] || '[]'); } catch (e) {}
         orders.push({

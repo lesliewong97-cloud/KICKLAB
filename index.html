@@ -643,7 +643,8 @@ const categories=[
   {id:'accessories',name:'Accessories',bg:'cat-accessories.jpg',desc:'Bags, Socks & Gear',bgPos:'center 60%'},
 ];
 
-let cart=[];
+let cart=JSON.parse(localStorage.getItem('kicklab_cart')||'[]');
+function saveCart(){ localStorage.setItem('kicklab_cart', JSON.stringify(cart)); }
 let appliedDiscount=null;
 const DISCOUNT_CODES={
   'FREESHIP':{type:'freeship',label:'Free Shipping'},
@@ -1380,6 +1381,9 @@ function showSuccess(){
   document.getElementById('page-success').classList.add('active');
   window.scrollTo(0,0);
   sessionStorage.removeItem('lastOrder');
+  cart=[];
+  saveCart();
+  updateCount();
 }
 
 function showToast(msg, type='success'){
@@ -1397,6 +1401,7 @@ function addFromDetail(id){
   const ex=cart.find(x=>x.key===key);
   if(ex)ex.qty++;
   else cart.push({...p,key,size:selectedSize,box:selectedBox||'full',price:finalPrice,qty:1});
+  saveCart();
   updateCount();
   const boxNote=selectedBox==='half'?' · Half Box':'';
   showToast('Added to cart! · '+(selectedSize||'')+boxNote);
@@ -1408,6 +1413,7 @@ function quickAdd(id,btn){
   const ex=cart.find(x=>x.key===key);
   if(ex)ex.qty++;
   else cart.push({...p,key,qty:1});
+  saveCart();
   updateCount();
   btn.style.background='#25a244';
   setTimeout(()=>btn.style.background='',400);
@@ -1694,6 +1700,7 @@ function changeQty(key, delta){
   if(!item) return;
   item.qty+=delta;
   if(item.qty<=0) cart=cart.filter(x=>x.key!==key);
+  saveCart();
   updateCount();
   renderCart(1);
 }
@@ -1702,6 +1709,7 @@ function removeItem(key){
   const i=cart.find(x=>x.key===key);
   if(i&&i.qty>1)i.qty--;
   else cart=cart.filter(x=>x.key!==key);
+  saveCart();
   updateCount();renderCart();
 }
 
@@ -2071,6 +2079,7 @@ if(_params.get('payment')==='success'){
 }
 
 loadInventory();
+updateCount();
 
 function openSearch(){
   document.getElementById('searchOverlay').classList.add('open');

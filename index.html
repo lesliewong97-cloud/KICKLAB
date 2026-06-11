@@ -644,6 +644,12 @@ const categories=[
 ];
 
 let cart=[];
+let appliedDiscount=null;
+const DISCOUNT_CODES={
+  'FREESHIP':{type:'freeship',label:'Free Shipping'},
+  'SAVE10':{type:'percent',value:10,label:'10% Off'},
+  'WELCOME5':{type:'fixed',value:5,label:'RM5 Off'}
+};
 let selectedSize=null;
 let selectedBox=null;
 let selectedPrice=null;
@@ -1438,19 +1444,57 @@ function updateShippingDisplay(){
   const subtotal=cart.reduce((a,b)=>a+b.price*b.qty,0);
   const shippingEl=document.getElementById('shippingFee');
   const totalEl=document.getElementById('grandTotal');
+  const discountLine=document.getElementById('discountLine');
   const checkoutBtn=document.querySelector('.checkout-btn');
   if(!shippingEl||!totalEl) return;
   if(!state){
     shippingEl.textContent='Select state to calculate';
     totalEl.textContent=`RM ${subtotal}`;
     if(checkoutBtn) checkoutBtn.textContent='Proceed to Pay →';
+    if(discountLine) discountLine.style.display='none';
     return;
   }
-  const shipping=calcShipping(state, totalQty);
-  const grand=subtotal+shipping;
-  shippingEl.textContent=`RM ${shipping}`;
+  const baseShipping=calcShipping(state, totalQty);
+  let shipping=baseShipping;
+  let discountAmount=0;
+  if(appliedDiscount){
+    if(appliedDiscount.type==='freeship') shipping=0;
+    else if(appliedDiscount.type==='percent') discountAmount=Math.round(subtotal*appliedDiscount.value)/100;
+    else if(appliedDiscount.type==='fixed') discountAmount=Math.min(appliedDiscount.value,subtotal);
+  }
+  const grand=Math.max(0, subtotal+shipping-discountAmount);
+  shippingEl.textContent=appliedDiscount&&appliedDiscount.type==='freeship'?`RM 0 (was RM ${baseShipping})`:`RM ${shipping}`;
+  if(discountLine){
+    if(discountAmount>0){
+      discountLine.style.display='flex';
+      discountLine.querySelector('span:last-child').textContent=`-RM ${discountAmount}`;
+    } else {
+      discountLine.style.display='none';
+    }
+  }
   totalEl.textContent=`RM ${grand}`;
   if(checkoutBtn) checkoutBtn.textContent=`Proceed to Pay → RM ${grand}`;
+}
+
+function applyDiscountCode(){
+  const input=document.getElementById('discountInput');
+  const msgEl=document.getElementById('discountMsg');
+  const code=input.value.trim().toUpperCase();
+  if(!code){
+    appliedDiscount=null;
+    if(msgEl) msgEl.innerHTML='';
+    updateShippingDisplay();
+    return;
+  }
+  const found=DISCOUNT_CODES[code];
+  if(found){
+    appliedDiscount={code,...found};
+    if(msgEl) msgEl.innerHTML=`<div style="color:#25a244;font-size:12px;margin-bottom:8px">✓ ${found.label} applied</div>`;
+  }else{
+    appliedDiscount=null;
+    if(msgEl) msgEl.innerHTML=`<div style="color:#E63946;font-size:12px;margin-bottom:8px">✗ Invalid code</div>`;
+  }
+  updateShippingDisplay();
 }
 
 function renderCart(step=1){
@@ -1533,8 +1577,16 @@ function renderCart(step=1){
     `;
     ft.innerHTML=`
       <div style="border-top:2px solid #f0f0f0;padding-top:1rem">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="discountInput" class="f-input" placeholder="Discount code" style="flex:1;text-transform:uppercase" value="${appliedDiscount?appliedDiscount.code:''}" onkeydown="if(event.key==='Enter'){event.preventDefault();applyDiscountCode();}">
+          <button onclick="applyDiscountCode()" style="background:#1A1A2E;color:#fff;border:none;border-radius:8px;padding:0 16px;font-size:12px;font-weight:600;cursor:pointer">Apply</button>
+        </div>
+        <div id="discountMsg"></div>
         <div style="display:flex;justify-content:space-between;font-size:13px;color:#888;margin-bottom:6px">
           <span>Subtotal</span><span>RM ${total}</span>
+        </div>
+        <div id="discountLine" style="display:none;justify-content:space-between;font-size:13px;color:#25a244;margin-bottom:6px">
+          <span>Discount</span><span>-RM 0</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:13px;color:#888;margin-bottom:10px">
           <span>Shipping (J&T)</span><span id="shippingFee" style="color:#1A1A2E">Select state to calculate</span>
@@ -1546,6 +1598,7 @@ function renderCart(step=1){
         <div style="text-align:center;font-size:11px;color:#aaa;margin-top:.75rem">🔒 Secure payment powered by Billplz</div>
       </div>
     `;
+    if(appliedDiscount) updateShippingDisplay();
   }
 }
 
@@ -1563,8 +1616,15 @@ async function checkout(total){
   if(!address1||!city||!postcode||!state){showToast('Please fill in your complete shipping address!','error');return;}
 
   const totalQty=cart.reduce((a,b)=>a+b.qty,0);
-  const shipping=calcShipping(state, totalQty);
-  const grandTotal=total+shipping;
+  const baseShipping=calcShipping(state, totalQty);
+  let shipping=baseShipping;
+  let discountAmount=0;
+  if(appliedDiscount){
+    if(appliedDiscount.type==='freeship') shipping=0;
+    else if(appliedDiscount.type==='percent') discountAmount=Math.round(total*appliedDiscount.value)/100;
+    else if(appliedDiscount.type==='fixed') discountAmount=Math.min(appliedDiscount.value,total);
+  }
+  const grandTotal=Math.max(0, total+shipping-discountAmount);
 
   const items=cart.map(i=>({
     name:i.name,

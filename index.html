@@ -539,6 +539,19 @@ a.logo span{color:#E63946}
     <button class="send-btn" onclick="adminLogin()">Login →</button>
   </div>
   <div style="max-width:900px;margin:30px auto;padding:0 16px;display:none" id="adminOrdersBox">
+    <h2 style="margin-bottom:16px">Discount Codes</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;background:#f8f8f8;border-radius:10px;padding:14px">
+      <input class="f-input" id="discCodeInput" placeholder="CODE" style="flex:1;min-width:100px;text-transform:uppercase">
+      <select class="f-input" id="discTypeInput" style="flex:1;min-width:120px">
+        <option value="freeship">Free Shipping</option>
+        <option value="percent">Percent Off (%)</option>
+        <option value="fixed">Fixed Amount Off (RM)</option>
+      </select>
+      <input class="f-input" id="discValueInput" type="number" placeholder="Value (% or RM)" style="flex:1;min-width:100px">
+      <input class="f-input" id="discMaxInput" type="number" placeholder="Max uses (0=unlimited)" style="flex:1;min-width:120px">
+      <button class="send-btn" style="flex:0 0 auto" onclick="addDiscountCode()">Add Code</button>
+    </div>
+    <div id="discountCodesList" style="margin-bottom:30px">Loading...</div>
     <h2 style="margin-bottom:16px">Orders</h2>
     <div id="adminOrdersList">Loading...</div>
   </div>
@@ -646,11 +659,6 @@ const categories=[
 let cart=JSON.parse(localStorage.getItem('kicklab_cart')||'[]');
 function saveCart(){ localStorage.setItem('kicklab_cart', JSON.stringify(cart)); }
 let appliedDiscount=null;
-const DISCOUNT_CODES={
-  'FREESHIP':{type:'freeship',label:'Free Shipping'},
-  'SAVE10':{type:'percent',value:10,label:'10% Off'},
-  'WELCOME5':{type:'fixed',value:5,label:'RM5 Off'}
-};
 let selectedSize=null;
 let selectedBox=null;
 let selectedPrice=null;
@@ -1384,6 +1392,7 @@ function showSuccess(){
   cart=[];
   saveCart();
   updateCount();
+  appliedDiscount=null;
 }
 
 function showToast(msg, type='success'){
@@ -1487,7 +1496,7 @@ function updateShippingDisplay(){
   if(checkoutBtn) checkoutBtn.textContent=`Proceed to Pay → RM ${grand}`;
 }
 
-function applyDiscountCode(){
+async function applyDiscountCode(){
   const input=document.getElementById('discountInput');
   const msgEl=document.getElementById('discountMsg');
   const code=input.value.trim().toUpperCase();
@@ -1497,13 +1506,24 @@ function applyDiscountCode(){
     updateShippingDisplay();
     return;
   }
-  const found=DISCOUNT_CODES[code];
-  if(found){
-    appliedDiscount={code,...found};
-    if(msgEl) msgEl.innerHTML=`<div style="color:#25a244;font-size:12px;margin-bottom:8px">✓ ${found.label} applied</div>`;
-  }else{
+  if(msgEl) msgEl.innerHTML=`<div style="color:#888;font-size:12px;margin-bottom:8px">Checking...</div>`;
+  try{
+    const res=await fetch('/api/discount-codes',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'validate',code})
+    });
+    const data=await res.json();
+    if(data.valid){
+      appliedDiscount={code:data.code,type:data.type,value:data.value,label:data.label};
+      if(msgEl) msgEl.innerHTML=`<div style="color:#25a244;font-size:12px;margin-bottom:8px">✓ ${data.label} applied</div>`;
+    }else{
+      appliedDiscount=null;
+      if(msgEl) msgEl.innerHTML=`<div style="color:#E63946;font-size:12px;margin-bottom:8px">✗ Invalid or expired code</div>`;
+    }
+  }catch(e){
     appliedDiscount=null;
-    if(msgEl) msgEl.innerHTML=`<div style="color:#E63946;font-size:12px;margin-bottom:8px">✗ Invalid code</div>`;
+    if(msgEl) msgEl.innerHTML=`<div style="color:#E63946;font-size:12px;margin-bottom:8px">✗ Error checking code</div>`;
   }
   updateShippingDisplay();
 }
@@ -1666,6 +1686,7 @@ async function checkout(total){
         address:`${address1}${address2?', '+address2:''}, ${postcode} ${city}, ${state}`,
         shipping,
         orderNum,
+        discountCode:appliedDiscount?appliedDiscount.code:null,
         redirect_url:window.location.origin,
       }),
     });
@@ -2137,6 +2158,91 @@ function adminLogin(){
   document.getElementById('adminLoginBox').style.display='none';
   document.getElementById('adminOrdersBox').style.display='block';
   loadAdminOrders();
+  loadDiscountCodes();
+}
+
+async function loadDiscountCodes(){
+  const list=document.getElementById('discountCodesList');
+  list.innerHTML='Loading...';
+  try{
+    const res=await fetch('/api/discount-codes',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:adminPassword,action:'list'})
+    });
+    const data=await res.json();
+    const codes=data.codes||[];
+    if(codes.length===0){
+      list.innerHTML='<p style="color:#888">No discount codes yet.</p>';
+      return;
+    }
+    const typeLabel={freeship:'Free Shipping',percent:'% Off',fixed:'RM Off'};
+    list.innerHTML=`
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tr style="text-align:left;color:#888;font-size:11px;letter-spacing:.5px">
+          <th style="padding:6px">CODE</th><th style="padding:6px">TYPE</th><th style="padding:6px">VALUE</th>
+          <th style="padding:6px">USED / MAX</th><th style="padding:6px">STATUS</th><th style="padding:6px"></th>
+        </tr>
+        ${codes.map(c=>`
+          <tr style="border-top:1px solid #f0f0f0">
+            <td style="padding:8px 6px;font-weight:700">${c.code}</td>
+            <td style="padding:8px 6px">${typeLabel[c.type]||c.type}</td>
+            <td style="padding:8px 6px">${c.type==='freeship'?'-':(c.type==='percent'?c.value+'%':'RM'+c.value)}</td>
+            <td style="padding:8px 6px">${c.used} / ${c.maxUses==='0'||!c.maxUses?'∞':c.maxUses}</td>
+            <td style="padding:8px 6px">${c.active?'<span style="color:#25a244;font-weight:600">Active</span>':'<span style="color:#aaa">Inactive</span>'}</td>
+            <td style="padding:8px 6px;text-align:right;white-space:nowrap">
+              <button onclick="toggleDiscountCode(${c.row})" style="background:none;border:1px solid #ddd;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;margin-right:4px">${c.active?'Disable':'Enable'}</button>
+              <button onclick="deleteDiscountCode(${c.row})" style="background:none;border:1px solid #E63946;color:#E63946;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">Delete</button>
+            </td>
+          </tr>
+        `).join('')}
+      </table>
+    `;
+  }catch(err){
+    list.innerHTML='<p style="color:#E63946">Failed to load discount codes.</p>';
+  }
+}
+
+async function addDiscountCode(){
+  const code=document.getElementById('discCodeInput').value.trim().toUpperCase();
+  const type=document.getElementById('discTypeInput').value;
+  const value=document.getElementById('discValueInput').value;
+  const maxUses=document.getElementById('discMaxInput').value;
+  if(!code){showToast('Please enter a code','error');return;}
+  if(type!=='freeship'&&!value){showToast('Please enter a value','error');return;}
+  try{
+    const res=await fetch('/api/discount-codes',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:adminPassword,action:'add',code,type,value:value||0,maxUses:maxUses||0})
+    });
+    if(!res.ok){showToast('Failed to add code','error');return;}
+    document.getElementById('discCodeInput').value='';
+    document.getElementById('discValueInput').value='';
+    document.getElementById('discMaxInput').value='';
+    showToast('Discount code added!');
+    loadDiscountCodes();
+  }catch(err){
+    showToast('Failed to add code','error');
+  }
+}
+
+async function toggleDiscountCode(row){
+  await fetch('/api/discount-codes',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({password:adminPassword,action:'toggle',row})
+  });
+  loadDiscountCodes();
+}
+
+async function deleteDiscountCode(row){
+  await fetch('/api/discount-codes',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({password:adminPassword,action:'delete',row})
+  });
+  loadDiscountCodes();
 }
 async function loadAdminOrders(){
   const list=document.getElementById('adminOrdersList');

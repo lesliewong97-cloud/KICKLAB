@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   const itemsDesc = items.map(i =>
-    `${i.isPreorder ? 'PREORDER ' : ''}${i.name} UK${i.size ? i.size.replace('UK ','') : 'N/A'} (${i.sku})${i.isPreorder ? ` ETA:${i.eta}` : ` [${i.box === 'half' ? 'Half Box' : 'Full Box'}]`} x${i.qty}`
+    `${i.isPreorder ? 'PREORDER ' : ''}(${i.sku}) UK${i.size ? i.size.replace('UK ','') : 'N/A'}${i.isPreorder ? ` ETA:${i.eta}` : ` [${i.box === 'half' ? 'Half Box' : 'Full Box'}]`} x${i.qty}`
   ).join(', ');
 
   const description = [

@@ -17,15 +17,8 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  const itemsDesc = items.map(i =>
-    `${i.isPreorder ? 'PREORDER ' : ''}(${i.sku}) UK${i.size ? i.size.replace('UK ','') : 'N/A'}${i.isPreorder ? ` ETA:${i.eta}` : ` [${i.box === 'half' ? 'Half Box' : 'Full Box'}]`} x${i.qty}`
-  ).join(', ');
-
   const description = [
     orderNum ? `ORDER:${orderNum}` : '',
-    itemsDesc,
-    address ? `Alamat: ${address}` : '',
-    shipping ? `Shipping: RM${shipping}` : '',
     discountCode ? `DISCOUNT:${discountCode}` : '',
   ].filter(Boolean).join(' | ');
 

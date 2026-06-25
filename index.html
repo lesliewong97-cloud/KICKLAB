@@ -1506,7 +1506,9 @@ function addFromDetail(id){
   const finalPrice=selectedPrice||p.price;
   const key=id+'-'+(selectedSize||'tbd')+'-'+(selectedBox||'full');
   const ex=cart.find(x=>x.key===key);
-  if(ex)ex.qty++;
+  // Stock check
+    if(window._inventoryCache){const _box=selectedBox||'full';const _stock=(window._inventoryCache[p.sku]?.[selectedSize]?.[_box])||0;const _inCart=cart.filter(c=>c.sku===p.sku&&c.size===selectedSize&&c.box===_box).reduce((s,c)=>s+c.qty,0);if(_inCart+1>_stock){showToast('抱歉，'+selectedSize+' '+(_box==='full'?'Full Box':'Half Box')+' 只剩 '+_stock+' 双！');return;}}
+    if(ex)ex.qty++;
   else cart.push({...p,key,size:selectedSize,box:selectedBox||'full',price:finalPrice,qty:1});
   saveCart();
   updateCount();
@@ -2146,6 +2148,7 @@ async function loadInventory(){
   try{
     const res=await fetch('/api/get-inventory');
     const inventory=await res.json();
+    window._inventoryCache = inventory;
     products.forEach(p=>{
       if(inventory[p.sku]){
         // New format: { "UK 8": { full: 6, half: 2 } }

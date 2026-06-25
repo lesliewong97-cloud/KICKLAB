@@ -24,6 +24,35 @@ export default async function handler(req, res) {
     const rows = data.values || [];
     const norm = (s) => String(s == null ? '' : s).replace(/^UK\s*/i, '').trim();
 
+    // ---- REBUILD: replace ALL data rows (keep header) with the provided rows ----
+    if (action === 'rebuild') {
+      // de-dup within batch by sku + normalized size (last one wins)
+      const map = new Map();
+      for (const item of items) {
+        const key = String(item.sku).trim() + '|' + norm(item.size);
+        const full = parseInt(item.full) || 0;
+        const half = parseInt(item.half) || 0;
+        map.set(key, [item.sku, item.size, full, half, full + half]);
+      }
+      const newRows = [...map.values()];
+      // clear existing data rows (keep row 1 header)
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Inventory!A2:E:clear`,
+        { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{}' }
+      );
+      if (newRows.length > 0) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Inventory!A2?valueInputOption=RAW`,
+          {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ values: newRows }),
+          }
+        );
+      }
+      return res.status(200).json({ ok: true, action, rowsWritten: newRows.length, dedupedFrom: items.length });
+    }
+
     // ---- SYNC-ADD: append only rows whose sku+size is NOT already present (never overwrites) ----
     if (action === 'sync-add') {
       const existing = new Set();

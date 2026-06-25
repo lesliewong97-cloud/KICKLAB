@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { password, items } = req.body || {};
+  const { password, action, items } = req.body || {};
   if (password !== 'Kicklab1234@') {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -22,38 +22,65 @@ export default async function handler(req, res) {
     );
     const data = await readRes.json();
     const rows = data.values || [];
+    const norm = (s) => String(s == null ? '' : s).replace(/^UK\s*/i, '').trim();
 
+    // ---- SYNC-ADD: append only rows whose sku+size is NOT already present (never overwrites) ----
+    if (action === 'sync-add') {
+      const existing = new Set();
+      for (let i = 1; i < rows.length; i++) {
+        const [rSku, rSize] = rows[i];
+        if (rSku) existing.add(rSku.trim() + '|' + norm(rSize));
+      }
+      const toAppend = [];
+      const added = [], skipped = [];
+      for (const item of items) {
+        const key = String(item.sku).trim() + '|' + norm(item.size);
+        if (existing.has(key)) { skipped.push(item.sku + ' ' + item.size); continue; }
+        existing.add(key); // avoid dup within this batch
+        const full = parseInt(item.full) || 0;
+        const half = parseInt(item.half) || 0;
+        const total = full + half;
+        toAppend.push([item.sku, item.size, full, half, total]);
+        added.push(item.sku + ' ' + item.size);
+      }
+      if (toAppend.length > 0) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Inventory!A:E:append?valueInputOption=RAW`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ values: toAppend }),
+          }
+        );
+      }
+      return res.status(200).json({ ok: true, action, addedCount: added.length, skippedCount: skipped.length, added, skipped });
+    }
+
+    // ---- DEDUCT (default): subtract qty from total (E) and the box column (C full / D half) ----
     const updates = [];
     const results = [];
-
     for (const item of items) {
-      const sku = item.sku;
-      const size = item.size;
-      const box = item.box; // 'full' or 'half'
       const qty = parseInt(item.qty) || 1;
       let matched = false;
-
       for (let i = 1; i < rows.length; i++) {
         const [rSku, rSize, fullBox, halfBox, stock] = rows[i];
-        if (rSku === sku && rSize === size) {
+        if (rSku === item.sku && norm(rSize) === norm(item.size)) {
           matched = true;
           const newStock = Math.max(0, parseInt(stock || 0) - qty);
           updates.push({ range: `Inventory!E${i + 1}`, values: [[newStock]] });
-          if (box === 'half') {
+          if (item.box === 'half') {
             const newHalf = Math.max(0, parseInt(halfBox || 0) - qty);
             updates.push({ range: `Inventory!D${i + 1}`, values: [[newHalf]] });
-            results.push({ sku, size, box, qty, newHalf, newStock });
+            results.push({ sku: item.sku, size: item.size, box: 'half', qty, newHalf, newStock });
           } else {
             const newFull = Math.max(0, parseInt(fullBox || 0) - qty);
             updates.push({ range: `Inventory!C${i + 1}`, values: [[newFull]] });
-            results.push({ sku, size, box: box || 'full', qty, newFull, newStock });
+            results.push({ sku: item.sku, size: item.size, box: 'full', qty, newFull, newStock });
           }
           break;
         }
       }
-      if (!matched) {
-        results.push({ sku, size, box, qty, error: 'Row not found in Inventory sheet' });
-      }
+      if (!matched) results.push({ sku: item.sku, size: item.size, qty, error: 'Row not found' });
     }
 
     if (updates.length > 0) {
@@ -66,8 +93,7 @@ export default async function handler(req, res) {
         }
       );
     }
-
-    return res.status(200).json({ ok: true, results });
+    return res.status(200).json({ ok: true, action: 'deduct', results });
   } catch (error) {
     console.error('admin-inventory error:', error.message);
     return res.status(500).json({ error: 'Failed to update inventory' });

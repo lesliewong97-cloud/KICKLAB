@@ -7,6 +7,9 @@ export default async function handler(req, res) {
   if (password !== 'Kicklab1234@') {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  if (action === 'ping') {
+    return res.status(200).json({ ok: true, version: 'rebuild-v1' });
+  }
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'No items provided' });
   }

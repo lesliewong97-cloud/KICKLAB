@@ -1,5 +1,3 @@
-import nodemailer from 'nodemailer';
-
 const ADMIN_PASSWORD = 'Kicklab1234@';
 const SHEET_NAME = 'Orders';
 const HEADERS = ['Timestamp','OrderNum','Name','Phone','Email','Address','Items','Subtotal','Shipping','Total','BillID','Status'];
@@ -127,16 +125,8 @@ async function ensureSheet(sheetId, token) {
 }
 
 async function sendShippedEmail({ email, name, orderNum, items }) {
-  const EMAIL_USER = process.env.EMAIL_USER;
-  const EMAIL_PASS = process.env.EMAIL_PASS;
-  if (!EMAIL_USER || !EMAIL_PASS) return;
-
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-  });
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) return;
 
   const itemsHtml = (items || []).map(i => `
     <tr>
@@ -147,42 +137,18 @@ async function sendShippedEmail({ email, name, orderNum, items }) {
     </tr>
   `).join('');
 
-  await transporter.sendMail({
-    from: `"KICKLAB" <${EMAIL_USER}>`,
-    to: email,
-    subject: `📦 Your KICKLAB Order #${orderNum} Has Shipped!`,
-    html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif">
-  <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-    <div style="background:#1A1A2E;padding:28px 32px;text-align:center">
-      <h1 style="color:#fff;margin:0;font-size:26px;letter-spacing:3px">KICK<span style="color:#E63946">LAB</span></h1>
-      <p style="color:rgba(255,255,255,0.5);margin:6px 0 0;font-size:13px;letter-spacing:1px">YOUR ORDER IS ON ITS WAY</p>
-    </div>
-    <div style="padding:28px 32px">
-      <p style="font-size:14px;color:#333;line-height:1.6">Hi ${name},</p>
-      <p style="font-size:14px;color:#333;line-height:1.6">Great news! Your order <strong>#${orderNum}</strong> has been shipped via J&T Express and is on its way to you.</p>
-
-      <div style="margin:20px 0">
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">ITEMS SHIPPED</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:4px 16px">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            ${itemsHtml}
-          </table>
-        </div>
-      </div>
-
-      <p style="font-size:13px;color:#666;line-height:1.6">If you have any questions, feel free to WhatsApp us anytime.</p>
-    </div>
-    <div style="background:#f8f8f8;padding:16px 32px;text-align:center">
-      <p style="margin:0;font-size:12px;color:#aaa">KICKLAB · kicklab.com.my</p>
-    </div>
-  </div>
-</body>
-</html>
-    `,
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'KICKLAB <noreply@kicklab.com.my>',
+      to: [email],
+      subject: `📦 Your KICKLAB Order #${orderNum} Has Shipped!`,
+      html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif"><div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)"><div style="background:#1A1A2E;padding:28px 32px;text-align:center"><h1 style="color:#fff;margin:0;font-size:26px;letter-spacing:3px">KICK<span style="color:#E63946">LAB</span></h1><p style="color:rgba(255,255,255,0.5);margin:6px 0 0;font-size:13px;letter-spacing:1px">YOUR ORDER IS ON ITS WAY</p></div><div style="padding:28px 32px"><p style="font-size:14px;color:#333;line-height:1.6">Hi ${name},</p><p style="font-size:14px;color:#333;line-height:1.6">Great news! Your order <strong>#${orderNum}</strong> has been shipped via J&T Express and is on its way to you.</p><div style="margin:20px 0"><p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">ITEMS SHIPPED</p><div style="background:#f8f8f8;border-radius:8px;padding:4px 16px"><table width="100%" cellpadding="0" cellspacing="0">${itemsHtml}</table></div></div><p style="font-size:13px;color:#666;line-height:1.6">If you have any questions, feel free to WhatsApp us anytime.</p></div><div style="background:#f8f8f8;padding:16px 32px;text-align:center"><p style="margin:0;font-size:12px;color:#aaa">KICKLAB · kicklab.com.my</p></div></div></body></html>`,
+    }),
   });
 }
 

@@ -58,12 +58,12 @@ export default async function handler(req, res) {
       return res.redirect(302, '/?payment=success');
     }
 
-    const items = parseDescription(description);
     const orderNum = (description.match(/ORDER:([A-Z0-9]+)/) || [])[1] || 'N/A';
-    console.log('Parsed orderNum:', orderNum);
-    const address = (description.match(/Alamat: ([^|]+)/) || [])[1]?.trim() || '';
-    const shippingFee = (description.match(/Shipping: RM([\d.]+)/) || [])[1] || '0';
     const discountCode = (description.match(/DISCOUNT:([A-Z0-9]+)/) || [])[1] || '';
+    const orderData = await getOrderData(orderNum);
+    const items = orderData.items;
+    const address = orderData.address;
+    const shippingFee = orderData.shippingFee;
 
     await Promise.all([
       items.length > 0 ? updateInventory(items) : Promise.resolve(),
@@ -522,6 +522,31 @@ async function updateInventory(items) {
       }
     );
   }
+}
+
+async function getOrderData(orderNum) {
+  if (!orderNum || orderNum === 'N/A') return { items: [], address: '', shippingFee: '0' };
+  const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
+  const sheetId = process.env.GOOGLE_SHEETS_ID;
+  const token = await getAccessToken(serviceAccount);
+  const readRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Orders!A:L`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  const data = await readRes.json();
+  const rows = data.values || [];
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][1] === orderNum) {
+      try {
+        return {
+          items: JSON.parse(rows[i][6] || '[]'),
+          address: rows[i][5] || '',
+          shippingFee: rows[i][8] || '0',
+        };
+      } catch { return { items: [], address: '', shippingFee: '0' }; }
+    }
+  }
+  return { items: [], address: '', shippingFee: '0' };
 }
 
 async function getAccessToken(serviceAccount) {

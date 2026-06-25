@@ -82,16 +82,29 @@ export default async function handler(req, res) {
 function parseDescription(desc) {
   if (!desc) return [];
   const items = [];
-  const parts = desc.split(', ');
+  // Split by ' | ' to separate ORDER, items, address, shipping sections
+  const sections = desc.split(' | ');
+  const itemsSection = sections.find(s =>
+    !s.startsWith('ORDER:') &&
+    !s.startsWith('Alamat:') &&
+    !s.startsWith('Shipping:') &&
+    !s.startsWith('DISCOUNT:') &&
+    !s.startsWith('BALANCE') &&
+    !s.startsWith('PREORDER')
+  );
+  if (!itemsSection) return [];
+  const parts = itemsSection.split(', ');
   for (const part of parts) {
     const ukMatch = part.match(/UK\s?([\d.]+)/i);
     const skuMatch = part.match(/\(([A-Z0-9-]+)\)/);
-    const qtyMatch = part.match(/x(\d+)$/);
+    const qtyMatch = part.match(/x(\d+)/);
+    const boxMatch = part.match(/\[(Full Box|Half Box)\]/i);
     if (ukMatch && skuMatch) {
       items.push({
         sku: skuMatch[1],
         size: 'UK ' + ukMatch[1],
         qty: qtyMatch ? parseInt(qtyMatch[1]) : 1,
+        box: boxMatch ? (boxMatch[1].toLowerCase().startsWith('full') ? 'full' : 'half') : null,
       });
     }
   }

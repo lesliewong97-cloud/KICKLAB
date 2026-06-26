@@ -6,8 +6,40 @@ export default async function handler(req, res) {
   const sheetId = process.env.GOOGLE_SHEETS_ID;
   const token = await getAccessToken(serviceAccount);
 
-  // Check inventory for a SKU
-  if (sku) {
+  // Restore inventory
+  if (req.query.action === 'restore') {
+    const restoreSku = req.query.sku;
+    const restoreSize = req.query.size;
+    const restoreQty = parseInt(req.query.qty || '1');
+    const r = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Inventory!A:E`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const data = await r.json();
+    const rows = data.values || [];
+    const norm = s => String(s == null ? '' : s).replace(/^UKs*/i, '').trim();
+    const updates = [];
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === restoreSku && norm(rows[i][1]) === norm(restoreSize)) {
+        const newFull = parseInt(rows[i][2] || 0) + restoreQty;
+        const newStock = parseInt(rows[i][4] || 0) + restoreQty;
+        updates.push({ range: `Inventory!C${i+1}`, values: [[newFull]] });
+        updates.push({ range: `Inventory!E${i+1}`, values: [[newStock]] });
+        break;
+      }
+    }
+    if (updates.length > 0) {
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valueInputOption: 'RAW', data: updates }),
+      });
+      return res.json({ ok: true, restored: { sku: restoreSku, size: restoreSize, qty: restoreQty } });
+    }
+    return res.json({ ok: false, error: 'not found' });
+  }
+
+  if (sku && !req.query.action) {
     const r = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Inventory!A:E`,
       { headers: { Authorization: `Bearer ${token}` } }
@@ -18,7 +50,6 @@ export default async function handler(req, res) {
     return res.json({ sku, rows: matches });
   }
 
-  // Check order items from Google Sheets
   if (req.query.order) {
     const orderNum = req.query.order;
     const r = await fetch(
@@ -31,23 +62,22 @@ export default async function handler(req, res) {
       if (rows[i][1] === orderNum) {
         let items = [];
         try { items = JSON.parse(rows[i][6] || '[]'); } catch(e) {}
-        return res.json({ orderNum, status: rows[i][11], address: rows[i][5], shipping: rows[i][8], items, rawItemsCell: rows[i][6] });
+        return res.json({ orderNum, status: rows[i][11], items });
       }
     }
     return res.json({ orderNum, error: 'not found' });
   }
 
-  // Fetch Billplz bill
   if (bill_id) {
     const SANDBOX = process.env.BILLPLZ_SANDBOX === 'true';
     const BASE = SANDBOX ? 'https://www.billplz-sandbox.com/api/v3/bills' : 'https://www.billplz.com/api/v3/bills';
     const credentials = Buffer.from(`${process.env.BILLPLZ_API_KEY}:`).toString('base64');
     const r = await fetch(`${BASE}/${bill_id}`, { headers: { Authorization: `Basic ${credentials}` } });
     const bill = await r.json();
-    return res.json({ bill_id, description: bill.description, paid_amount: bill.paid_amount, paid: bill.paid, name: bill.name, email: bill.email });
+    return res.json({ bill_id, description: bill.description, paid: bill.paid, name: bill.name });
   }
 
-  return res.json({ error: 'Pass ?bill_id=, ?sku=, or ?order=' });
+  return res.json({ usage: '?bill_id= | ?sku= | ?order= | ?action=restore&sku=&size=&qty=' });
 }
 
 async function getAccessToken(serviceAccount) {

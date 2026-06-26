@@ -66,9 +66,11 @@ export default async function handler(req, res) {
       discountCode ? incrementDiscountUsage(discountCode) : Promise.resolve(),
     ]);
 
-    // Fire-and-forget emails — do not block or throw
-    sendOrderEmail(bill, orderNum, address, shippingFee, items).catch(e => console.error('Order email error:', e.message));
-    if (bill.email) sendCustomerEmail(bill, orderNum, address, shippingFee, items).catch(e => console.error('Customer email error:', e.message));
+    // Await emails before redirect so they complete before serverless shuts down
+    await Promise.allSettled([
+      sendOrderEmail(bill, orderNum, address, shippingFee, items),
+      bill.email ? sendCustomerEmail(bill, orderNum, address, shippingFee, items) : Promise.resolve(),
+    ]);
 
     return res.redirect(302, '/?payment=success');
   } catch (error) {
@@ -395,7 +397,8 @@ async function updateInventory(items) {
   for (const item of items) {
     for (let i = 1; i < rows.length; i++) {
       const [sku, size, fullBox, halfBox, stock] = rows[i];
-      if (sku === item.sku && size === item.size) {
+      const norm = s => String(s == null ? '' : s).replace(/^UK\s*/i, '').trim();
+      if (sku === item.sku && norm(size) === norm(item.size)) {
         const newStock = Math.max(0, parseInt(stock || 0) - item.qty);
         updates.push({ range: `Inventory!E${i + 1}`, values: [[newStock]] });
         if (item.box === 'half') {

@@ -958,7 +958,14 @@ function renderProducts(){
   renderCategories();
   renderGenderCards();
   renderSizeFilter();
+  fetch('/api/preorder-config').then(r=>r.json()).then(cfg=>{
+  preorderProducts.forEach(p=>{
+    if(cfg[p.sku]&&p.sizes&&p.sizes.length>0&&typeof p.sizes[0]==='string'){
+      p.sizes=p.sizes.filter(s=>cfg[p.sku][s]!==false);
+    }
+  });
   renderPreorders();
+}).catch(()=>renderPreorders());
   fetchReviews();
 }
 

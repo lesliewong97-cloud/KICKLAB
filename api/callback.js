@@ -1,5 +1,3 @@
-import nodemailer from 'nodemailer';
-
 export default async function handler(req, res) {
   console.log('CALLBACK BODY:', JSON.stringify(req.body));
 
@@ -28,7 +26,7 @@ export default async function handler(req, res) {
     if (description.startsWith('PREORDER')) {
       const orderNum = (description.match(/ORDER:([A-Z0-9]+)/) || [])[1] || 'N/A';
       const eta = (description.match(/ETA:([^|]+)/) || [])[1]?.trim() || '';
-      const price = (description.match(/PRICE:([\d.]+)/) || [])[1] || '0';
+      const price = (description.match(/PRICE:([d.]+)/) || [])[1] || '0';
       const address = (description.match(/Alamat: ([^|]+)/) || [])[1]?.trim() || '';
       const itemPart = (description.match(/\|\s*(.+?\([A-Z0-9-]+\)\s*UK[\d.]+)\s*\|/) || [])[1]?.trim() || '';
       const skuMatch = itemPart.match(/\(([A-Z0-9-]+)\)/);
@@ -38,10 +36,8 @@ export default async function handler(req, res) {
       const productName = itemPart.replace(/\([A-Z0-9-]+\).*/, '').trim();
       const deposit = (parseInt(bill.paid_amount || bill.amount) / 100).toFixed(2);
 
-      await Promise.all([
-        recordPreorder({ orderNum, bill, sku, productName, size, deposit, price, address, eta }),
-        sendPreorderEmail({ orderNum, bill, sku, productName, size, deposit, address, eta }),
-      ]);
+      await recordPreorder({ orderNum, bill, sku, productName, size, deposit, price, address, eta });
+      sendPreorderEmail({ orderNum, bill, sku, productName, size, deposit, address, eta }).catch(e => console.error('Preorder email error:', e.message));
 
       return res.redirect(302, '/?payment=success');
     }
@@ -50,27 +46,29 @@ export default async function handler(req, res) {
       const orderNum = (description.match(/ORDER:([A-Z0-9]+)/) || [])[1] || 'N/A';
       const amount = (parseInt(bill.paid_amount || bill.amount) / 100).toFixed(2);
 
-      await Promise.all([
-        markPreorderPaid(orderNum),
-        sendBalancePaidEmail({ orderNum, bill, amount }),
-      ]);
+      await markPreorderPaid(orderNum);
+      sendBalancePaidEmail({ orderNum, bill, amount }).catch(e => console.error('Balance email error:', e.message));
 
       return res.redirect(302, '/?payment=success');
     }
 
+    // Normal order
+    const items = parseDescription(description);
     const orderNum = (description.match(/ORDER:([A-Z0-9]+)/) || [])[1] || 'N/A';
+    console.log('Parsed orderNum:', orderNum, 'items:', items.length);
+    const address = (description.match(/Alamat: ([^|]+)/) || [])[1]?.trim() || '';
+    const shippingFee = (description.match(/Shipping: RM([\d.]+)/) || [])[1] || '0';
     const discountCode = (description.match(/DISCOUNT:([A-Z0-9]+)/) || [])[1] || '';
-    const orderData = await getOrderData(orderNum);
-    const items = orderData.items;
-    const address = orderData.address;
-    const shippingFee = orderData.shippingFee;
 
+    // Critical ops — must succeed
     await Promise.all([
       items.length > 0 ? updateInventory(items) : Promise.resolve(),
-      sendOrderEmail(bill, description, orderNum, address, shippingFee, items),
       markOrderPaid(orderNum),
       discountCode ? incrementDiscountUsage(discountCode) : Promise.resolve(),
     ]);
+
+    // Email is non-critical — fire and forget
+    sendOrderEmail(bill, orderNum, address, shippingFee, items).catch(e => console.error('Order email error:', e.message));
 
     return res.redirect(302, '/?payment=success');
   } catch (error) {
@@ -82,178 +80,63 @@ export default async function handler(req, res) {
 function parseDescription(desc) {
   if (!desc) return [];
   const items = [];
-  // Split by ' | ' to separate ORDER, items, address, shipping sections
-  const sections = desc.split(' | ');
-  const itemsSection = sections.find(s =>
-    !s.startsWith('ORDER:') &&
-    !s.startsWith('Alamat:') &&
-    !s.startsWith('Shipping:') &&
-    !s.startsWith('DISCOUNT:') &&
-    !s.startsWith('BALANCE') &&
-    !s.startsWith('PREORDER')
-  );
-  if (!itemsSection) return [];
-  const parts = itemsSection.split(', ');
+  const parts = desc.split(', ');
   for (const part of parts) {
     const ukMatch = part.match(/UK\s?([\d.]+)/i);
     const skuMatch = part.match(/\(([A-Z0-9-]+)\)/);
-    const qtyMatch = part.match(/x(\d+)/);
-    const boxMatch = part.match(/\[(Full Box|Half Box)\]/i);
+    const qtyMatch = part.match(/x(\d+)$/);
+    const boxMatch = part.match(/\[(Full|Half) Box\]/i);
     if (ukMatch && skuMatch) {
       items.push({
         sku: skuMatch[1],
         size: 'UK ' + ukMatch[1],
         qty: qtyMatch ? parseInt(qtyMatch[1]) : 1,
-        box: boxMatch ? (boxMatch[1].toLowerCase().startsWith('full') ? 'full' : 'half') : null,
+        box: boxMatch ? (boxMatch[1].toLowerCase() === 'half' ? 'half' : 'full') : 'full',
       });
     }
   }
   return items;
 }
 
-async function sendOrderEmail(bill, description, orderNum, address, shippingFee, items) {
-  const EMAIL_USER = process.env.EMAIL_USER;
-  const EMAIL_PASS = process.env.EMAIL_PASS;
-  if (!EMAIL_USER || !EMAIL_PASS) return;
+async function sendOrderEmail(bill, orderNum, address, shippingFee, items) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) return;
 
   const amount = (parseInt(bill.paid_amount || bill.amount) / 100).toFixed(2);
   const subtotal = (parseFloat(amount) - parseFloat(shippingFee)).toFixed(2);
 
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+  const itemsHtml = (items || []).map(item => `
+    <tr>
+      <td style="padding:12px 0;border-bottom:1px solid #f0f0f0">
+        <p style="margin:0;font-size:13px;font-weight:600;color:#1A1A2E">👟 ${item.sku}</p>
+        <p style="margin:2px 0 0;font-size:12px;color:#888">${item.size}${item.box ? ' · ' + (item.box === 'half' ? 'Half Box' : 'Full Box') : ''} · Qty: ${item.qty}</p>
+      </td>
+    </tr>
+  `).join('');
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'KICKLAB <noreply@kicklab.com.my>',
+      to: ['lesliewong97@gmail.com'],
+      subject: `🎉 New Order #${orderNum} - RM${amount} | ${bill.name}`,
+      html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif"><div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)"><div style="background:#1A1A2E;padding:28px 32px;text-align:center"><h1 style="color:#fff;margin:0;font-size:26px;letter-spacing:3px">KICK<span style="color:#E63946">LAB</span></h1><p style="color:rgba(255,255,255,0.5);margin:6px 0 0;font-size:13px;">NEW ORDER RECEIVED</p></div><div style="background:#E63946;padding:20px 32px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td><p style="color:rgba(255,255,255,0.8);margin:0 0 2px;font-size:11px;">ORDER NUMBER</p><p style="color:#fff;margin:0;font-size:22px;font-weight:700">#${orderNum}</p></td><td style="text-align:right"><p style="color:rgba(255,255,255,0.8);margin:0 0 2px;font-size:11px;">TOTAL</p><p style="color:#fff;margin:0;font-size:28px;font-weight:700">RM${amount}</p></td></tr></table></div><div style="padding:28px 32px"><div style="margin-bottom:20px"><p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">CUSTOMER</p><div style="background:#f8f8f8;border-radius:8px;padding:14px 16px"><p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#1A1A2E">${bill.name}</p><p style="margin:0 0 3px;font-size:13px;color:#666">📱 ${bill.mobile}</p><p style="margin:0;font-size:13px;color:#666">✉️ ${bill.email}</p></div></div><div style="margin-bottom:20px"><p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">ITEMS ORDERED</p><div style="background:#f8f8f8;border-radius:8px;padding:4px 16px"><table width="100%" cellpadding="0" cellspacing="0">${itemsHtml}</table></div></div><div style="margin-bottom:20px"><p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">SHIPPING ADDRESS</p><div style="background:#f8f8f8;border-radius:8px;padding:14px 16px"><p style="margin:0;font-size:13px;color:#555;line-height:1.7">📍 ${address || 'Not provided'}</p></div></div><div style="border-top:2px solid #f0f0f0;padding-top:16px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="font-size:13px;color:#888;padding-bottom:6px">Subtotal</td><td style="text-align:right;font-size:13px;color:#888;">RM${subtotal}</td></tr><tr><td style="font-size:13px;color:#888;padding-bottom:10px">Shipping (J&T)</td><td style="text-align:right;font-size:13px;color:#888;">RM${shippingFee}</td></tr><tr><td style="font-size:15px;font-weight:700;color:#1A1A2E">Total Paid</td><td style="text-align:right;font-size:20px;font-weight:700;color:#E63946">RM${amount}</td></tr></table></div></div><div style="background:#f8f8f8;padding:16px 32px;text-align:center"><p style="margin:0;font-size:12px;color:#aaa">KICKLAB · kicklab.com.my</p></div></div></body></html>`,
+    }),
   });
-
-  const itemsHtml = items.map(item => {
-    return `
-      <tr>
-        <td style="padding:12px 0;border-bottom:1px solid #f0f0f0">
-          <p style="margin:0;font-size:13px;font-weight:600;color:#1A1A2E">👟 ${item.sku}</p>
-          <p style="margin:2px 0 0;font-size:12px;color:#888">${item.size}${item.box ? ' · ' + (item.box === 'half' ? 'Half Box' : 'Full Box') : ''} · Qty: ${item.qty}</p>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  await transporter.sendMail({
-    from: `"KICKLAB" <${EMAIL_USER}>`,
-    to: EMAIL_USER,
-    subject: `🎉 New Order #${orderNum} - RM${amount} | ${bill.name}`,
-    html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif">
-  <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-
-    <!-- Header -->
-    <div style="background:#1A1A2E;padding:28px 32px;text-align:center">
-      <h1 style="color:#fff;margin:0;font-size:26px;letter-spacing:3px">KICK<span style="color:#E63946">LAB</span></h1>
-      <p style="color:rgba(255,255,255,0.5);margin:6px 0 0;font-size:13px;letter-spacing:1px">NEW ORDER RECEIVED</p>
-    </div>
-
-    <!-- Order Number + Amount Banner -->
-    <div style="background:#E63946;padding:20px 32px">
-      <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td>
-            <p style="color:rgba(255,255,255,0.8);margin:0 0 2px;font-size:11px;letter-spacing:1px">ORDER NUMBER</p>
-            <p style="color:#fff;margin:0;font-size:22px;font-weight:700">#${orderNum}</p>
-          </td>
-          <td style="text-align:right">
-            <p style="color:rgba(255,255,255,0.8);margin:0 0 2px;font-size:11px;letter-spacing:1px">TOTAL</p>
-            <p style="color:#fff;margin:0;font-size:28px;font-weight:700">RM${amount}</p>
-          </td>
-        </tr>
-      </table>
-      <p style="color:rgba(255,255,255,0.6);margin:8px 0 0;font-size:12px">${new Date().toLocaleString('en-MY',{timeZone:'Asia/Kuala_Lumpur',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
-    </div>
-
-    <div style="padding:28px 32px">
-
-      <!-- Customer -->
-      <div style="margin-bottom:24px">
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">CUSTOMER</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:14px 16px">
-          <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#1A1A2E">${bill.name}</p>
-          <p style="margin:0 0 3px;font-size:13px;color:#666">📱 ${bill.mobile}</p>
-          <p style="margin:0;font-size:13px;color:#666">✉️ ${bill.email}</p>
-        </div>
-      </div>
-
-      <!-- Items -->
-      <div style="margin-bottom:24px">
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">ITEMS ORDERED</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:4px 16px">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            ${itemsHtml}
-          </table>
-        </div>
-      </div>
-
-      <!-- Shipping Address -->
-      <div style="margin-bottom:24px">
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">SHIPPING ADDRESS</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:14px 16px">
-          <p style="margin:0;font-size:13px;color:#555;line-height:1.7">📍 ${address || 'Not provided'}</p>
-        </div>
-      </div>
-
-      <!-- Price Breakdown -->
-      <div style="border-top:2px solid #f0f0f0;padding-top:16px">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="font-size:13px;color:#888;padding-bottom:6px">Subtotal</td>
-            <td style="text-align:right;font-size:13px;color:#888;padding-bottom:6px">RM${subtotal}</td>
-          </tr>
-          <tr>
-            <td style="font-size:13px;color:#888;padding-bottom:10px">Shipping (J&T)</td>
-            <td style="text-align:right;font-size:13px;color:#888;padding-bottom:10px">RM${shippingFee}</td>
-          </tr>
-          <tr>
-            <td style="font-size:15px;font-weight:700;color:#1A1A2E">Total Paid</td>
-            <td style="text-align:right;font-size:20px;font-weight:700;color:#E63946">RM${amount}</td>
-          </tr>
-        </table>
-      </div>
-
-      <p style="text-align:center;font-size:11px;color:#ccc;margin-top:20px">Bill ID: ${bill.id}</p>
-    </div>
-
-    <!-- Footer -->
-    <div style="background:#f8f8f8;padding:16px 32px;text-align:center">
-      <p style="margin:0;font-size:12px;color:#aaa">KICKLAB · kicklab.com.my</p>
-    </div>
-
-  </div>
-</body>
-</html>
-    `,
-  });
-
-  console.log('Order email sent to', EMAIL_USER);
 }
 
 async function recordPreorder({ orderNum, bill, sku, productName, size, deposit, price, address, eta }) {
   const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
   const sheetId = process.env.GOOGLE_SHEETS_ID;
   const token = await getAccessToken(serviceAccount);
-
   const timestamp = new Date().toLocaleString('en-MY', { timeZone: 'Asia/Kuala_Lumpur' });
-
   await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Preorder!A:M:append?valueInputOption=RAW`,
     {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        values: [[
-          timestamp, orderNum, bill.name, bill.mobile, bill.email,
-          sku, productName, size, deposit, price, address, eta, 'Pending Arrival'
-        ]],
-      }),
+      body: JSON.stringify({ values: [[timestamp, orderNum, bill.name, bill.mobile, bill.email, sku, productName, size, deposit, price, address, eta, 'Pending Arrival']] }),
     }
   );
 }
@@ -262,168 +145,50 @@ async function markPreorderPaid(orderNum) {
   const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
   const sheetId = process.env.GOOGLE_SHEETS_ID;
   const token = await getAccessToken(serviceAccount);
-
-  const readRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Preorder!A:M`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  const readRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Preorder!A:M`, { headers: { Authorization: `Bearer ${token}` } });
   const data = await readRes.json();
   const rows = data.values || [];
-
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][1] === orderNum) {
-      await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Preorder!M${i + 1}?valueInputOption=RAW`,
-        {
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ values: [['Paid - Ready to Ship']] }),
-        }
-      );
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Preorder!M${i + 1}?valueInputOption=RAW`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [['Paid - Ready to Ship']] }),
+      });
       return rows[i];
     }
   }
   return null;
 }
 
-async function sendBalancePaidEmail({ orderNum, bill, amount }) {
-  const EMAIL_USER = process.env.EMAIL_USER;
-  const EMAIL_PASS = process.env.EMAIL_PASS;
-  if (!EMAIL_USER || !EMAIL_PASS) return;
-
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+async function sendPreorderEmail({ orderNum, bill, sku, productName, size, deposit, address, eta }) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) return;
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'KICKLAB <noreply@kicklab.com.my>',
+      to: ['lesliewong97@gmail.com'],
+      subject: `🎉 New Preorder #${orderNum} - RM${deposit} deposit | ${bill.name}`,
+      html: `<p>Preorder #${orderNum} from ${bill.name} (📱${bill.mobile}) — ${productName} (${sku}) ${size}, ETA: ${eta}, Deposit: RM${deposit}</p><p>Address: ${address}</p>`,
+    }),
   });
-
-  await transporter.sendMail({
-    from: `"KICKLAB" <${EMAIL_USER}>`,
-    to: EMAIL_USER,
-    subject: `✅ Balance Paid #${orderNum} - RM${amount} | ${bill.name}`,
-    html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif">
-  <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-    <div style="background:#1A1A2E;padding:28px 32px;text-align:center">
-      <h1 style="color:#fff;margin:0;font-size:26px;letter-spacing:3px">KICK<span style="color:#E63946">LAB</span></h1>
-      <p style="color:rgba(255,255,255,0.5);margin:6px 0 0;font-size:13px;letter-spacing:1px">PREORDER BALANCE PAID</p>
-    </div>
-    <div style="background:#2ecc71;padding:20px 32px">
-      <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td>
-            <p style="color:rgba(255,255,255,0.85);margin:0 0 2px;font-size:11px;letter-spacing:1px">ORDER NUMBER</p>
-            <p style="color:#fff;margin:0;font-size:22px;font-weight:700">#${orderNum}</p>
-          </td>
-          <td style="text-align:right">
-            <p style="color:rgba(255,255,255,0.85);margin:0 0 2px;font-size:11px;letter-spacing:1px">BALANCE PAID</p>
-            <p style="color:#fff;margin:0;font-size:28px;font-weight:700">RM${amount}</p>
-          </td>
-        </tr>
-      </table>
-    </div>
-    <div style="padding:28px 32px">
-      <div style="margin-bottom:24px">
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">CUSTOMER</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:14px 16px">
-          <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#1A1A2E">${bill.name}</p>
-          <p style="margin:0 0 3px;font-size:13px;color:#666">📱 ${bill.mobile}</p>
-          <p style="margin:0;font-size:13px;color:#666">✉️ ${bill.email}</p>
-        </div>
-      </div>
-      <p style="text-align:center;font-size:14px;font-weight:700;color:#2ecc71;margin:0">Status: Paid - Ready to Ship 📦</p>
-      <p style="text-align:center;font-size:11px;color:#ccc;margin-top:20px">Bill ID: ${bill.id}</p>
-    </div>
-    <div style="background:#f8f8f8;padding:16px 32px;text-align:center">
-      <p style="margin:0;font-size:12px;color:#aaa">KICKLAB · kicklab.com.my</p>
-    </div>
-  </div>
-</body>
-</html>
-    `,
-  });
-
-  console.log('Balance paid email sent to', EMAIL_USER);
 }
 
-async function sendPreorderEmail({ orderNum, bill, sku, productName, size, deposit, address, eta }) {
-  const EMAIL_USER = process.env.EMAIL_USER;
-  const EMAIL_PASS = process.env.EMAIL_PASS;
-  if (!EMAIL_USER || !EMAIL_PASS) return;
-
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+async function sendBalancePaidEmail({ orderNum, bill, amount }) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) return;
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'KICKLAB <noreply@kicklab.com.my>',
+      to: ['lesliewong97@gmail.com'],
+      subject: `✅ Balance Paid #${orderNum} - RM${amount} | ${bill.name}`,
+      html: `<p>Balance payment received for Preorder #${orderNum} from ${bill.name} (📱${bill.mobile}). Amount: RM${amount}. Status: Paid - Ready to Ship.</p>`,
+    }),
   });
-
-  await transporter.sendMail({
-    from: `"KICKLAB" <${EMAIL_USER}>`,
-    to: EMAIL_USER,
-    subject: `🎉 New Preorder #${orderNum} - RM${deposit} deposit | ${bill.name}`,
-    html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif">
-  <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
-    <div style="background:#1A1A2E;padding:28px 32px;text-align:center">
-      <h1 style="color:#fff;margin:0;font-size:26px;letter-spacing:3px">KICK<span style="color:#E63946">LAB</span></h1>
-      <p style="color:rgba(255,255,255,0.5);margin:6px 0 0;font-size:13px;letter-spacing:1px">NEW PREORDER RECEIVED</p>
-    </div>
-    <div style="background:#E63946;padding:20px 32px">
-      <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td>
-            <p style="color:rgba(255,255,255,0.8);margin:0 0 2px;font-size:11px;letter-spacing:1px">ORDER NUMBER</p>
-            <p style="color:#fff;margin:0;font-size:22px;font-weight:700">#${orderNum}</p>
-          </td>
-          <td style="text-align:right">
-            <p style="color:rgba(255,255,255,0.8);margin:0 0 2px;font-size:11px;letter-spacing:1px">DEPOSIT PAID</p>
-            <p style="color:#fff;margin:0;font-size:28px;font-weight:700">RM${deposit}</p>
-          </td>
-        </tr>
-      </table>
-    </div>
-    <div style="padding:28px 32px">
-      <div style="margin-bottom:24px">
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">CUSTOMER</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:14px 16px">
-          <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#1A1A2E">${bill.name}</p>
-          <p style="margin:0 0 3px;font-size:13px;color:#666">📱 ${bill.mobile}</p>
-          <p style="margin:0;font-size:13px;color:#666">✉️ ${bill.email}</p>
-        </div>
-      </div>
-      <div style="margin-bottom:24px">
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">PREORDER ITEM</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:14px 16px">
-          <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#1A1A2E">👟 ${productName} (${sku})</p>
-          <p style="margin:0;font-size:13px;color:#666">${size} · ETA: ${eta}</p>
-        </div>
-      </div>
-      <div style="margin-bottom:24px">
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa">SHIPPING ADDRESS</p>
-        <div style="background:#f8f8f8;border-radius:8px;padding:14px 16px">
-          <p style="margin:0;font-size:13px;color:#555;line-height:1.7">📍 ${address || 'Not provided'}</p>
-        </div>
-      </div>
-      <p style="text-align:center;font-size:11px;color:#ccc;margin-top:20px">Bill ID: ${bill.id}</p>
-    </div>
-    <div style="background:#f8f8f8;padding:16px 32px;text-align:center">
-      <p style="margin:0;font-size:12px;color:#aaa">KICKLAB · kicklab.com.my</p>
-    </div>
-  </div>
-</body>
-</html>
-    `,
-  });
-
-  console.log('Preorder email sent to', EMAIL_USER);
 }
 
 async function markOrderPaid(orderNum) {
@@ -431,24 +196,16 @@ async function markOrderPaid(orderNum) {
   const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
   const sheetId = process.env.GOOGLE_SHEETS_ID;
   const token = await getAccessToken(serviceAccount);
-
-  const readRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Orders!A:L`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  const readRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Orders!A:L`, { headers: { Authorization: `Bearer ${token}` } });
   const data = await readRes.json();
   const rows = data.values || [];
-
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][1] === orderNum) {
-      await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Orders!L${i + 1}?valueInputOption=RAW`,
-        {
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ values: [['Paid']] }),
-        }
-      );
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Orders!L${i + 1}?valueInputOption=RAW`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [['Paid']] }),
+      });
       return;
     }
   }
@@ -458,25 +215,17 @@ async function incrementDiscountUsage(code) {
   const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
   const sheetId = process.env.GOOGLE_SHEETS_ID;
   const token = await getAccessToken(serviceAccount);
-
-  const readRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/DiscountCodes!A:F`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  const readRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/DiscountCodes!A:F`, { headers: { Authorization: `Bearer ${token}` } });
   const data = await readRes.json();
   const rows = data.values || [];
-
   for (let i = 1; i < rows.length; i++) {
     if ((rows[i][0] || '').trim().toUpperCase() === code.trim().toUpperCase()) {
       const used = parseInt(rows[i][4] || '0') + 1;
-      await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/DiscountCodes!E${i + 1}?valueInputOption=RAW`,
-        {
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ values: [[used]] }),
-        }
-      );
+      await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/DiscountCodes!E${i + 1}?valueInputOption=RAW`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [[used]] }),
+      });
       return;
     }
   }
@@ -486,14 +235,9 @@ async function updateInventory(items) {
   const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
   const sheetId = process.env.GOOGLE_SHEETS_ID;
   const token = await getAccessToken(serviceAccount);
-
-  const readRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Inventory!A:E`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  const readRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Inventory!A:E`, { headers: { Authorization: `Bearer ${token}` } });
   const data = await readRes.json();
   const rows = data.values || [];
-
   const updates = [];
   for (const item of items) {
     for (let i = 1; i < rows.length; i++) {
@@ -502,63 +246,27 @@ async function updateInventory(items) {
         const newStock = Math.max(0, parseInt(stock || 0) - item.qty);
         updates.push({ range: `Inventory!E${i + 1}`, values: [[newStock]] });
         if (item.box === 'half') {
-          const newHalf = Math.max(0, parseInt(halfBox || 0) - item.qty);
-          updates.push({ range: `Inventory!D${i + 1}`, values: [[newHalf]] });
-        } else if (item.box === 'full') {
-          const newFull = Math.max(0, parseInt(fullBox || 0) - item.qty);
-          updates.push({ range: `Inventory!C${i + 1}`, values: [[newFull]] });
+          updates.push({ range: `Inventory!D${i + 1}`, values: [[Math.max(0, parseInt(halfBox || 0) - item.qty)]] });
+        } else {
+          updates.push({ range: `Inventory!C${i + 1}`, values: [[Math.max(0, parseInt(fullBox || 0) - item.qty)]] });
         }
+        break;
       }
     }
   }
-
   if (updates.length > 0) {
-    await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ valueInputOption: 'RAW', data: updates }),
-      }
-    );
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ valueInputOption: 'RAW', data: updates }),
+    });
   }
-}
-
-async function getOrderData(orderNum) {
-  if (!orderNum || orderNum === 'N/A') return { items: [], address: '', shippingFee: '0' };
-  const serviceAccount = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
-  const sheetId = process.env.GOOGLE_SHEETS_ID;
-  const token = await getAccessToken(serviceAccount);
-  const readRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Orders!A:L`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  const data = await readRes.json();
-  const rows = data.values || [];
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][1] === orderNum) {
-      try {
-        return {
-          items: JSON.parse(rows[i][6] || '[]'),
-          address: rows[i][5] || '',
-          shippingFee: rows[i][8] || '0',
-        };
-      } catch { return { items: [], address: '', shippingFee: '0' }; }
-    }
-  }
-  return { items: [], address: '', shippingFee: '0' };
 }
 
 async function getAccessToken(serviceAccount) {
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: 'RS256', typ: 'JWT' };
-  const payload = {
-    iss: serviceAccount.client_email,
-    scope: 'https://www.googleapis.com/auth/spreadsheets',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-  };
+  const payload = { iss: serviceAccount.client_email, scope: 'https://www.googleapis.com/auth/spreadsheets', aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 };
   const encode = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
   const unsignedToken = `${encode(header)}.${encode(payload)}`;
   const { createSign } = await import('crypto');
@@ -569,10 +277,7 @@ async function getAccessToken(serviceAccount) {
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
-    }),
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: jwt }),
   });
   const tokenData = await tokenRes.json();
   return tokenData.access_token;

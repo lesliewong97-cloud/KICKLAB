@@ -1,4 +1,10 @@
 export default async function handler(req, res) {
+  // Password protection — required for all access
+  const key = req.query.key || req.headers['x-admin-key'];
+  if (key !== 'Kicklab1234@') {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const bill_id = req.query.bill_id;
   const sku = req.query.sku;
   const action = req.query.action;

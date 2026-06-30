@@ -861,7 +861,7 @@ function renderCategories(){
   const grid=document.getElementById('categoryGrid');
   if(!grid) return;
   grid.innerHTML=categories.map(c=>{
-    const count=products.filter(p=>p.cat===c.id).length;
+    const count=products.filter(p=>p.cat===c.id).length+preorderProducts.filter(p=>p.cat===c.id).length;
     const bgStyle=c.bg
       ?`background-image:url('${c.bg}');background-size:cover;background-position:${c.bgPos||'center'}`
       :`background:#1A1A2E`;
@@ -887,7 +887,7 @@ function renderCategories(){
 function openCategory(catId, skipHistory=false){
   if(!skipHistory) sessionStorage.setItem('scrollPos', window.scrollY);
   const cat=categories.find(c=>c.id===catId);
-  const list=products.filter(p=>p.cat===catId);
+  const list=[...products.filter(p=>p.cat===catId), ...preorderProducts.filter(p=>p.cat===catId)];
 
   document.getElementById('categoryTitle').textContent=cat.name;
   document.getElementById('categoryBreadcrumb').textContent=cat.name;
@@ -903,7 +903,7 @@ function openCategory(catId, skipHistory=false){
     grid.innerHTML=list.map(p=>`
       <a class="card" href="/#${p.slug}" onclick="event.preventDefault();openProduct(${p.id})">
         <div class="card-img">
-          ${p.badge?`<span class="badge badge-${p.badge==='new'?'new':'hot'}">${p.badge==='new'?'NEW':'🔥 HOT'}</span>`:''}
+          ${p.isPreorder?`<span class="badge badge-hot">📦 PREORDER</span>`:(p.badge?`<span class="badge badge-${p.badge==='new'?'new':'hot'}">${p.badge==='new'?'NEW':'🔥 HOT'}</span>`:'')}
           <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
         </div>
         <div class="card-body">
@@ -914,7 +914,7 @@ function openCategory(catId, skipHistory=false){
               ${p.retail?`<div style="font-size:11px;color:#aaa;text-decoration:line-through">RM ${p.retail}</div>`:''}
               <div class="price">RM ${p.price}</div>
             </div>
-            <button class="add-btn" onclick="event.stopPropagation();quickAdd(${p.id},this)">+</button>
+            ${p.isPreorder?`<span style="font-size:11px;color:#E63946;font-weight:600">Preorder →</span>`:`<button class="add-btn" onclick="event.stopPropagation();quickAdd(${p.id},this)">+</button>`}
           </div>
         </div>
       </a>

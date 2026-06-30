@@ -945,7 +945,7 @@ function renderGenderCards(){
     {id:'kids',label:'Kids',icon:'⭐',cls:'gender-card-kids'},
   ];
   grid.innerHTML=genders.map(g=>{
-    const count=products.filter(p=>getProductGender(p)===g.id).length;
+    const count=products.filter(p=>getProductGender(p)===g.id).length+preorderProducts.filter(p=>getProductGender(p)===g.id).length;
     return `<div class="gender-card ${g.cls}" onclick="openGender('${g.id}')">
       <div class="gender-card-arrow">→</div>
       <div class="gender-card-label">${g.label}</div>
@@ -957,7 +957,7 @@ function renderGenderCards(){
 function openGender(genderId, skipHistory=false){
   if(!skipHistory) sessionStorage.setItem('scrollPos', window.scrollY);
   const labels={men:'Men',women:'Women',kids:'Kids'};
-  const list=products.filter(p=>getProductGender(p)===genderId);
+  const list=[...products.filter(p=>getProductGender(p)===genderId), ...preorderProducts.filter(p=>getProductGender(p)===genderId)];
 
   document.getElementById('categoryTitle').textContent=labels[genderId];
   document.getElementById('categoryBreadcrumb').textContent=labels[genderId];
@@ -966,7 +966,7 @@ function openGender(genderId, skipHistory=false){
   grid.innerHTML=list.map(p=>`
     <a class="card" href="/#${p.slug}" onclick="event.preventDefault();openProduct(${p.id})">
       <div class="card-img">
-        ${p.badge?`<span class="badge badge-${p.badge==='new'?'new':'hot'}">${p.badge==='new'?'NEW':'🔥 HOT'}</span>`:''}
+        ${p.isPreorder?`<span class="badge badge-hot">📦 PREORDER</span>`:(p.badge?`<span class="badge badge-${p.badge==='new'?'new':'hot'}">${p.badge==='new'?'NEW':'🔥 HOT'}</span>`:'')}
         <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
       </div>
       <div class="card-body">
@@ -977,7 +977,7 @@ function openGender(genderId, skipHistory=false){
             ${p.retail?`<div style="font-size:11px;color:#aaa;text-decoration:line-through">RM ${p.retail}</div>`:''}
             <div class="price">RM ${p.price}</div>
           </div>
-          <button class="add-btn" onclick="event.stopPropagation();quickAdd(${p.id},this)">+</button>
+          ${p.isPreorder?`<span style="font-size:11px;color:#E63946;font-weight:600">Preorder →</span>`:`<button class="add-btn" onclick="event.stopPropagation();quickAdd(${p.id},this)">+</button>`}
         </div>
       </div>
     </a>

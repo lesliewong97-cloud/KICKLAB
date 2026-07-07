@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   if (action === 'ping') {
-    return res.status(200).json({ ok: true, version: 'rebuild-v1' });
+    return res.status(200).json({ ok: true, version: 'set-v1' });
   }
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'No items provided' });
@@ -54,6 +54,45 @@ export default async function handler(req, res) {
         );
       }
       return res.status(200).json({ ok: true, action, rowsWritten: newRows.length, dedupedFrom: items.length });
+    }
+
+    // ---- SET: set absolute full/half for given sku+size (updates existing row, appends if new) ----
+    if (action === 'set') {
+      const updates = [];
+      const toAppend = [];
+      const results = [];
+      for (const item of items) {
+        const full = parseInt(item.full) || 0;
+        const half = parseInt(item.half) || 0;
+        const total = full + half;
+        let foundRow = -1;
+        for (let i = 1; i < rows.length; i++) {
+          if (rows[i][0] === item.sku && norm(rows[i][1]) === norm(item.size)) { foundRow = i; break; }
+        }
+        if (foundRow >= 0) {
+          const r = foundRow + 1;
+          updates.push({ range: `Inventory!C${r}`, values: [[full]] });
+          updates.push({ range: `Inventory!D${r}`, values: [[half]] });
+          updates.push({ range: `Inventory!E${r}`, values: [[total]] });
+          results.push({ sku: item.sku, size: item.size, full, half, total, action: 'updated' });
+        } else {
+          toAppend.push([item.sku, item.size, full, half, total]);
+          results.push({ sku: item.sku, size: item.size, full, half, total, action: 'appended' });
+        }
+      }
+      if (updates.length > 0) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,
+          { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ valueInputOption: 'RAW', data: updates }) }
+        );
+      }
+      if (toAppend.length > 0) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Inventory!A:E:append?valueInputOption=RAW`,
+          { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ values: toAppend }) }
+        );
+      }
+      return res.status(200).json({ ok: true, action, results });
     }
 
     // ---- SYNC-ADD: append only rows whose sku+size is NOT already present (never overwrites) ----

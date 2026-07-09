@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   if (action === 'ping') {
-    return res.status(200).json({ ok: true, version: 'set-v1' });
+    return res.status(200).json({ ok: true, version: 'setprice-v1' });
   }
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'No items provided' });
@@ -93,6 +93,30 @@ export default async function handler(req, res) {
         );
       }
       return res.status(200).json({ ok: true, action, results });
+    }
+
+    // ---- SET-PRICE: write price into column F for every row whose sku is in the price map ----
+    if (action === 'set-price') {
+      const priceBySku = {};
+      for (const item of items) priceBySku[String(item.sku).trim()] = item.price;
+      const updates = [];
+      let matched = 0;
+      const notFound = new Set(Object.keys(priceBySku));
+      for (let i = 1; i < rows.length; i++) {
+        const rSku = (rows[i][0] || '').trim();
+        if (rSku in priceBySku) {
+          updates.push({ range: `Inventory!F${i + 1}`, values: [[priceBySku[rSku]]] });
+          matched++;
+          notFound.delete(rSku);
+        }
+      }
+      if (updates.length > 0) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,
+          { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ valueInputOption: 'RAW', data: updates }) }
+        );
+      }
+      return res.status(200).json({ ok: true, action, rowsUpdated: matched, skusWithoutRows: [...notFound] });
     }
 
     // ---- SYNC-ADD: append only rows whose sku+size is NOT already present (never overwrites) ----

@@ -311,7 +311,6 @@ a.logo span{color:#E63946}
 /* PREORDER */
 .badge-preorder{background:#1A1A2E;color:#fff}
 .preorder-eta{font-size:11px;color:#E63946;font-weight:600;margin-bottom:6px}
-.preorder-empty{color:#aaa;font-size:14px;padding:2rem 0;text-align:center;grid-column:1/-1}
 
 /* SIZE CHART MODAL */
 .sizechart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
@@ -418,12 +417,6 @@ a.logo span{color:#E63946}
     <div class="section-title">Shop by Size</div>
     <div style="font-size:13px;color:#888;margin-bottom:1.25rem">Select your size to see all available shoes</div>
     <div class="size-filter-grid" id="sizeFilterGrid"></div>
-  </div>
-
-  <div class="section" id="shopPreorder">
-    <div class="section-title">Preorder</div>
-    <div style="font-size:13px;color:#888;margin-bottom:1.25rem">Reserve these upcoming pairs now with a small deposit — estimated to arrive in about 2 weeks.</div>
-    <div class="products" id="preorderGrid"></div>
   </div>
 
   <div class="section" id="shopReviews">
@@ -1090,40 +1083,8 @@ function renderProducts(){
       p.sizes=p.sizes.filter(s=>cfg[p.sku][s]!==false);
     }
   });
-  renderPreorders();
-}).catch(()=>renderPreorders());
+}).catch(()=>{});
   fetchReviews();
-}
-
-// ── PREORDER ─────────────────────────────────────────────────────────────
-function renderPreorders(){
-  const grid=document.getElementById('preorderGrid');
-  const section=document.getElementById('shopPreorder');
-  if(!grid) return;
-  if(!preorderProducts.length){
-    section.style.display='none';
-    return;
-  }
-  section.style.display='';
-  grid.innerHTML=preorderProducts.map(p=>`
-    <a class="card" href="/#${p.slug}" onclick="event.preventDefault();openProduct(${p.id})">
-      <div class="card-img">
-        <span class="badge badge-preorder">PREORDER</span>
-        <img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'">
-      </div>
-      <div class="card-body">
-        <div class="card-brand">${p.brand}</div>
-        <div class="card-name">${p.name}</div>
-        <div class="preorder-eta">📦 ETA: ${p.eta}</div>
-        <div class="card-footer">
-          <div>
-            ${p.retail?`<div style="font-size:11px;color:#aaa;text-decoration:line-through">RM ${p.retail}</div>`:''}
-            <div class="price">RM ${p.price}</div>
-          </div>
-        </div>
-      </div>
-    </a>
-  `).join('');
 }
 
 // ── REVIEWS ──────────────────────────────────────────────────────────────

@@ -1532,6 +1532,7 @@ function showSuccess(){
       <div class="order-total">
         <div style="flex:1">
           <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px"><span>Subtotal</span><span>RM ${order.subtotal}</span></div>
+          ${order.discount>0?`<div style="display:flex;justify-content:space-between;font-size:12px;color:#25a244;margin-bottom:4px"><span>Discount${order.discountLabel?' ('+order.discountLabel+')':''}</span><span>-RM ${order.discount}</span></div>`:''}
           <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:8px"><span>Shipping (J&T)</span><span>RM ${order.shipping}</span></div>
           <div style="display:flex;justify-content:space-between;align-items:center"><span class="order-total-label">Total Paid</span><span class="order-total-val">RM ${order.total}</span></div>
         </div>
@@ -1623,6 +1624,37 @@ function calcShipping(state, totalQty){
   }
 }
 
+// ===== Tiered quantity discount (in-stock pairs only): 1=原价, 2=-10%, 3+=-20% capped =====
+function tierInfo(){
+  const qty=cart.reduce((a,b)=>a+(b.isPreorder?0:b.qty),0);
+  const subtotal=cart.reduce((a,b)=>a+(b.isPreorder?0:b.price*b.qty),0);
+  let pct=0; if(qty>=3)pct=20; else if(qty===2)pct=10;
+  return {qty, subtotal, pct, amount:Math.round(subtotal*pct/100)};
+}
+// Decide the single best discount (tier vs code — larger wins, never stack). Returns applied amounts.
+function cartDiscount(baseShipping){
+  const subtotal=cart.reduce((a,b)=>a+b.price*b.qty,0);
+  const t=tierInfo();
+  let codeAmount=0, codeFreeship=false, codeLabel='';
+  if(appliedDiscount){
+    codeLabel=appliedDiscount.label||appliedDiscount.code||'Code';
+    if(appliedDiscount.type==='freeship') codeFreeship=true;
+    else if(appliedDiscount.type==='percent') codeAmount=Math.round(subtotal*appliedDiscount.value)/100;
+    else if(appliedDiscount.type==='fixed') codeAmount=Math.min(appliedDiscount.value,subtotal);
+  }
+  const codeSaving=codeFreeship?(baseShipping||0):codeAmount;
+  let discountAmount=0, shipping=(baseShipping||0), source='', label='';
+  if(t.amount>0 && t.amount>=codeSaving){
+    discountAmount=t.amount; source='tier'; label=`Buy ${t.qty} · −${t.pct}%`;
+  } else if(codeSaving>0){
+    source='code'; label=codeLabel;
+    if(codeFreeship) shipping=0; else discountAmount=codeAmount;
+  }
+  const grand=Math.max(0, subtotal+shipping-discountAmount);
+  return {subtotal, shipping, discountAmount, grand, source, label, tier:t,
+          code: source==='tier'?`AUTO BUY${t.qty} -${t.pct}%`:(source==='code'&&appliedDiscount?appliedDiscount.code:null)};
+}
+
 function updateShippingDisplay(){
   const state=document.getElementById('buyerState')?.value;
   const totalQty=cart.reduce((a,b)=>a+b.qty,0);
@@ -1640,25 +1672,19 @@ function updateShippingDisplay(){
     return;
   }
   const baseShipping=calcShipping(state, totalQty);
-  let shipping=baseShipping;
-  let discountAmount=0;
-  if(appliedDiscount){
-    if(appliedDiscount.type==='freeship') shipping=0;
-    else if(appliedDiscount.type==='percent') discountAmount=Math.round(subtotal*appliedDiscount.value)/100;
-    else if(appliedDiscount.type==='fixed') discountAmount=Math.min(appliedDiscount.value,subtotal);
-  }
-  const grand=Math.max(0, subtotal+shipping-discountAmount);
-  shippingEl.textContent=appliedDiscount&&appliedDiscount.type==='freeship'?`RM 0 (was RM ${baseShipping})`:`RM ${shipping}`;
+  const d=cartDiscount(baseShipping);
+  shippingEl.textContent=(d.source==='code'&&d.shipping===0)?`RM 0 (was RM ${baseShipping})`:`RM ${d.shipping}`;
   if(discountLine){
-    if(discountAmount>0){
+    if(d.discountAmount>0){
       discountLine.style.display='flex';
-      discountLine.querySelector('span:last-child').textContent=`-RM ${discountAmount}`;
+      discountLine.querySelector('span:first-child').textContent=`Discount (${d.label})`;
+      discountLine.querySelector('span:last-child').textContent=`-RM ${d.discountAmount}`;
     } else {
       discountLine.style.display='none';
     }
   }
-  totalEl.textContent=`RM ${grand}`;
-  if(checkoutBtn) checkoutBtn.textContent=`Proceed to Pay → RM ${grand}`;
+  totalEl.textContent=`RM ${d.grand}`;
+  if(checkoutBtn) checkoutBtn.textContent=`Proceed to Pay → RM ${d.grand}`;
 }
 
 async function applyDiscountCode(){
@@ -1731,9 +1757,21 @@ function renderCart(step=1){
         </div>
       `).join('')}
     `;
+    const t1=tierInfo();
+    let promo='';
+    if(t1.qty>=3) promo=`🎉 You're getting 20% off!`;
+    else if(t1.qty===2) promo=`🎉 10% off applied — add 1 more pair for 20% off`;
+    else if(t1.qty===1) promo=`➕ Add 1 more pair to get 10% off`;
     ft.innerHTML=`
       <div style="border-top:2px solid #f0f0f0;margin-top:.5rem;padding-top:1rem">
-        <div class="cart-total"><span class="total-label">Order Total</span><span class="total-val">RM ${total}</span></div>
+        ${promo?`<div style="background:#fff4f4;color:#E63946;font-size:12px;font-weight:600;text-align:center;padding:8px;border-radius:8px;margin-bottom:10px">${promo}</div>`:''}
+        ${t1.amount>0?`
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#888;margin-bottom:4px"><span>Subtotal</span><span>RM ${total}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#25a244;margin-bottom:6px"><span>Discount (Buy ${t1.qty} · −${t1.pct}%)</span><span>-RM ${t1.amount}</span></div>
+          <div class="cart-total"><span class="total-label">Order Total</span><span class="total-val">RM ${total-t1.amount}</span></div>
+        `:`
+          <div class="cart-total"><span class="total-label">Order Total</span><span class="total-val">RM ${total}</span></div>
+        `}
         <button class="checkout-btn" style="margin-top:1rem" onclick="renderCart(2)">Continue to Checkout →</button>
       </div>
     `;
@@ -1794,7 +1832,7 @@ function renderCart(step=1){
         <div style="text-align:center;font-size:11px;color:#aaa;margin-top:.75rem">🔒 Secure payment powered by Billplz</div>
       </div>
     `;
-    if(appliedDiscount) updateShippingDisplay();
+    updateShippingDisplay();
   }
 }
 
@@ -1813,14 +1851,9 @@ async function checkout(total){
 
   const totalQty=cart.reduce((a,b)=>a+b.qty,0);
   const baseShipping=calcShipping(state, totalQty);
-  let shipping=baseShipping;
-  let discountAmount=0;
-  if(appliedDiscount){
-    if(appliedDiscount.type==='freeship') shipping=0;
-    else if(appliedDiscount.type==='percent') discountAmount=Math.round(total*appliedDiscount.value)/100;
-    else if(appliedDiscount.type==='fixed') discountAmount=Math.min(appliedDiscount.value,total);
-  }
-  const grandTotal=Math.max(0, total+shipping-discountAmount);
+  const d=cartDiscount(baseShipping);
+  const shipping=d.shipping;
+  const grandTotal=d.grand;
 
   const items=cart.map(i=>({
     name:i.name,
@@ -1851,7 +1884,7 @@ async function checkout(total){
         address:`${address1}${address2?', '+address2:''}, ${postcode} ${city}, ${state}`,
         shipping,
         orderNum,
-        discountCode:appliedDiscount?appliedDiscount.code:null,
+        discountCode:d.code,
         redirect_url:window.location.origin,
       }),
     });
@@ -1865,6 +1898,8 @@ async function checkout(total){
         address:`${address1}${address2?', '+address2:''}, ${postcode} ${city}, ${state}`,
         items:cart.map(i=>({brand:i.brand,name:i.name,img:i.img,size:i.size,qty:i.qty,price:i.price})),
         subtotal:total,
+        discount:d.discountAmount,
+        discountLabel:d.label,
         shipping,
         total:grandTotal,
       }));
